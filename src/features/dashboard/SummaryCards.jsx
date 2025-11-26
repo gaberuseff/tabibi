@@ -1,22 +1,25 @@
 import { Card, CardContent } from "../../components/ui/card";
-import { CalendarDays, Users, Clock, FileText } from "lucide-react";
+import { CalendarDays, Users, Clock } from "lucide-react";
 import { formatCurrency } from "../../lib/utils";
 import useDashboardStats from "./useDashboardStats";
+import useFilteredPatientStats from "./useFilteredPatientStats";
 import { SkeletonLine } from "../../components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
+import { useState } from "react";
 
 function Stat({ icon: Icon, label, value, isLoading }) {
   return (
     <Card className="bg-card/70">
-      <CardContent className="flex items-center gap-4 py-5">
-        <div className="size-10 rounded-[calc(var(--radius)-4px)] bg-primary/10 text-primary grid place-items-center">
-          <Icon className="size-5" />
+      <CardContent className="flex items-center gap-3 py-3">
+        <div className="size-8 rounded-[calc(var(--radius)-4px)] bg-primary/10 text-primary grid place-items-center">
+          <Icon className="size-4" />
         </div>
         <div>
           <div className="text-xs text-muted-foreground">{label}</div>
           {isLoading ? (
-            <SkeletonLine className="h-5 w-12" />
+            <SkeletonLine className="h-4 w-8" />
           ) : (
-            <div className="text-xl font-semibold">{value}</div>
+            <div className="text-lg font-semibold">{value}</div>
           )}
         </div>
       </CardContent>
@@ -26,33 +29,60 @@ function Stat({ icon: Icon, label, value, isLoading }) {
 
 export default function SummaryCards() {
   const { data: stats, isLoading } = useDashboardStats();
+  const [filter, setFilter] = useState("month");
+  const { data: filteredStats, isLoading: isFilteredLoading } = useFilteredPatientStats(filter);
+
+  const filterLabels = {
+    week: "آخر أسبوع",
+    month: "آخر شهر",
+    threeMonths: "آخر 3 أشهر"
+  };
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <Stat
-        icon={CalendarDays}
-        label="مواعيد اليوم"
-        value={stats?.todayAppointments || 0}
-        isLoading={isLoading}
-      />
-      <Stat
-        icon={Users}
-        label="عدد المرضى"
-        value={stats?.totalPatients || 0}
-        isLoading={isLoading}
-      />
-      <Stat
-        icon={FileText}
-        label="ملفات محدثة"
-        value={stats?.updatedPatients || 0}
-        isLoading={isLoading}
-      />
-      <Stat
-        icon={Clock}
-        label="المواعيد المعلقة"
-        value={stats?.pendingAppointments || 0}
-        isLoading={isLoading}
-      />
+    <div className="space-y-4">
+      {/* Filter Section */}
+      <div className="flex justify-end">
+        <div className="w-40">
+          <Select value={filter} onValueChange={setFilter}>
+            <SelectTrigger className="h-8 text-sm">
+              <SelectValue placeholder="اختر فترة" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="week">آخر أسبوع</SelectItem>
+              <SelectItem value="month">آخر شهر</SelectItem>
+              <SelectItem value="threeMonths">آخر 3 أشهر</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Stat
+          icon={CalendarDays}
+          label="مواعيد اليوم"
+          value={stats?.todayAppointments || 0}
+          isLoading={isLoading}
+        />
+        <Stat
+          icon={Users}
+          label="عدد المرضى الكلي"
+          value={stats?.totalPatients || 0}
+          isLoading={isLoading}
+        />
+        <Stat
+          icon={Users}
+          label={`المرضى - ${filterLabels[filter]}`}
+          value={filteredStats?.filteredPatients || 0}
+          isLoading={isLoading || isFilteredLoading}
+        />
+        <Stat
+          icon={Clock}
+          label="المواعيد المعلقة"
+          value={stats?.pendingAppointments || 0}
+          isLoading={isLoading}
+        />
+      </div>
     </div>
   );
 }

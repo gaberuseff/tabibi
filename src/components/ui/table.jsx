@@ -1,4 +1,5 @@
 import {Button} from "./button";
+import { useState, useEffect } from "react";
 
 export default function DataTable({
   columns = [],
@@ -11,6 +12,87 @@ export default function DataTable({
   total,
   onPageChange,
 }) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkIsMobile);
+    };
+  }, []);
+
+  if (isMobile) {
+    // Mobile card view
+    return (
+      <div className={`table-card-view ${className}`}>
+        {data.length > 0 ? (
+          data.map((row) => (
+            <div key={rowKey(row)} className="table-row">
+              {columns.map((col, i) => {
+                const value = col.render ? col.render(row) : row[col.accessor] ?? "-";
+                // Skip action columns on mobile if they contain buttons
+                if (col.header === "" || col.header === "الإجراء") {
+                  return (
+                    <div key={i} className="table-cell" data-label={col.header}>
+                      {value}
+                    </div>
+                  );
+                }
+                return (
+                  <div key={i} className="table-cell" data-label={col.header}>
+                    {value}
+                  </div>
+                );
+              })}
+            </div>
+          ))
+        ) : (
+          <div className="p-6 text-center text-muted-foreground">
+            {emptyLabel}
+          </div>
+        )}
+        {typeof total === "number" &&
+        total >= 0 &&
+        typeof page === "number" &&
+        typeof pageSize === "number" &&
+        onPageChange && (
+          <div className="flex items-center justify-between border-t border-border px-3 py-2 mt-4">
+            <div className="text-xs text-muted-foreground">
+              {Math.min((page - 1) * pageSize + 1, total)}–
+              {Math.min(page * pageSize, total)} من {total}
+            </div>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => onPageChange(page - 1)}>
+                السابق
+              </Button>
+              <span className="px-2 py-1 rounded-[var(--radius)] bg-muted text-xs">
+                {page}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={page >= Math.ceil((total || 0) / pageSize)}
+                onClick={() => onPageChange(page + 1)}>
+                التالي
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Desktop table view
   return (
     <div className={`overflow-x-auto ${className}`}>
       <table className="w-full text-sm">

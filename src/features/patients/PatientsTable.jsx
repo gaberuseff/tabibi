@@ -28,7 +28,7 @@ export default function PatientsTable({ patients, total, page, pageSize, onPageC
       header: "الإجراء",
       render: (p) => (
         <Link to={`/patients/${p.id}`}>
-          <Button variant="outline" className="gap-2">
+          <Button variant="outline" className="gap-2" size="sm">
             <Eye className="size-4" />
             عرض
           </Button>
@@ -40,8 +40,15 @@ export default function PatientsTable({ patients, total, page, pageSize, onPageC
   return (
     <Card>
       <CardContent className="p-0">
-        <DataTable columns={columns} data={patients ?? []} 
-        total={total} page={page} pageSize={pageSize} onPageChange={onPageChange} />
+        <DataTable 
+          columns={columns} 
+          data={patients ?? []} 
+          total={total} 
+          page={page} 
+          pageSize={pageSize} 
+          onPageChange={onPageChange} 
+          emptyLabel="لا توجد مرضى"
+        />
       </CardContent>
     </Card>
   );

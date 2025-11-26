@@ -1,14 +1,25 @@
 import { format } from "date-fns"
 import { ar } from "date-fns/locale"
-import { ArrowLeft, Calendar, Download, FileText, MessageCircle, Pill, Printer } from "lucide-react"
+import { ArrowLeft, Calendar, Download, FileText, MessageCircle, Pill, Printer, Edit } from "lucide-react"
 import { useNavigate, useParams } from "react-router-dom"
 import { Button } from "../../components/ui/button"
 import { Card, CardContent, CardHeader } from "../../components/ui/card"
 import { SkeletonLine } from "../../components/ui/skeleton"
+import { Input } from "../../components/ui/input"
+import { Label } from "../../components/ui/label"
+import { Textarea } from "../../components/ui/textarea"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog"
 import generatePrescriptionPdfNew from "../../lib/generatePrescriptionPdfNew"
 import { useAuth } from "../auth/AuthContext"
 import useClinic from "../auth/useClinic"
 import useVisit from "./useVisit"
+import { useState } from "react"
+import useUpdateVisit from "./useUpdateVisit"
 
 export default function VisitDetailPage() {
     const { visitId } = useParams()
@@ -16,6 +27,26 @@ export default function VisitDetailPage() {
     const { data: clinic } = useClinic()
     const { user } = useAuth()
     const navigate = useNavigate()
+    const { mutate: updateVisit, isPending: isUpdating } = useUpdateVisit()
+    const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false)
+    const [whatsappNumber, setWhatsappNumber] = useState("")
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+    const [editData, setEditData] = useState({
+        diagnosis: "",
+        notes: "",
+        medications: []
+    })
+
+    // Initialize edit data when visit loads
+    useState(() => {
+        if (visit && !editData.diagnosis) {
+            setEditData({
+                diagnosis: visit.diagnosis || "",
+                notes: visit.notes || "",
+                medications: visit.medications ? [...visit.medications] : []
+            })
+        }
+    }, [visit])
 
     const handleGeneratePdf = async () => {
         console.log("Print button clicked");
@@ -42,22 +73,22 @@ export default function VisitDetailPage() {
         }
     }
 
+    const openWhatsAppModal = () => {
+        // Pre-fill with patient's phone number if available
+        if (visit && visit.patient?.phone) {
+            setWhatsappNumber(visit.patient.phone);
+        }
+        setIsWhatsAppModalOpen(true);
+    }
+
     const handleWhatsAppShare = () => {
         if (!visit) {
             alert("لا توجد بيانات الكشف لمشاركتها");
             return;
         }
 
-        // Get patient phone number from visit data (patient_phone field)
-        const patientPhone = visit.patient_phone;
-        
-        if (!patientPhone) {
-            alert("رقم هاتف المريض غير متوفر");
-            return;
-        }
-
         // Format phone number for WhatsApp (remove any non-digit characters and add country code if needed)
-        let formattedPhone = patientPhone.replace(/\D/g, '');
+        let formattedPhone = whatsappNumber.replace(/\D/g, '');
         
         // Assuming Egyptian phone numbers, add country code if not present
         if (formattedPhone.startsWith('0')) {
@@ -66,20 +97,26 @@ export default function VisitDetailPage() {
             formattedPhone = '20' + formattedPhone;
         }
 
-        // Create WhatsApp message with prescription details
-        const message = `روشتة طبية
-اسم العيادة: ${clinic?.name || 'غير متوفر'}
-الطبيب: ${user?.name || 'غير متوفر'}
-التاريخ: ${visit.created_at ? new Date(visit.created_at).toLocaleDateString('ar-EG') : 'غير محدد'}
-التشخيص: ${visit.diagnosis || 'غير محدد'}
+        // Create formatted medications list
+        let medicationsList = "";
+        if (visit.medications && Array.isArray(visit.medications) && visit.medications.length > 0) {
+            medicationsList = visit.medications.map((med, index) => 
+                `${index + 1}. ${med.name || ''}\n   ${med.using || ''}`
+            ).join('\n\n');
+        } else {
+            medicationsList = "لا توجد أدوية محددة";
+        }
 
-الأدوية:
-${visit.medications && Array.isArray(visit.medications) && visit.medications.length > 0 
-    ? visit.medications.map((med, index) => `${index + 1}. ${med.name || ''} - ${med.using || ''}`).join('\n')
-    : 'لا توجد أدوية محددة'
-}
+        // Create WhatsApp message with only medications and welcome message
+        const message = `*مرحباً بك في عيادة ${clinic?.name || 'الطبيب'}*
 
-تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}`;
+نرجو منك الالتزام بالتعليمات التالية:
+
+${medicationsList}
+
+*تاريخ الزيارة:* ${visit.created_at ? new Date(visit.created_at).toLocaleDateString('ar-EG') : 'غير محدد'}
+
+نشكرك على ثقتك بعيادتنا!`;
 
         // Encode message for URL
         const encodedMessage = encodeURIComponent(message);
@@ -87,19 +124,85 @@ ${visit.medications && Array.isArray(visit.medications) && visit.medications.len
         // Create WhatsApp URL
         const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodedMessage}`;
         
-        // Open WhatsApp in new tab
+        // Close modal and open WhatsApp in new tab
+        setIsWhatsAppModalOpen(false);
         window.open(whatsappUrl, '_blank');
+    }
+
+    const openEditModal = () => {
+        // Initialize edit data with current visit data
+        setEditData({
+            diagnosis: visit?.diagnosis || "",
+            notes: visit?.notes || "",
+            medications: visit?.medications ? [...visit.medications] : []
+        })
+        setIsEditModalOpen(true)
+    }
+
+    const handleEditChange = (field, value) => {
+        setEditData(prev => ({
+            ...prev,
+            [field]: value
+        }))
+    }
+
+    const handleMedicationChange = (index, field, value) => {
+        setEditData(prev => {
+            const newMedications = [...prev.medications]
+            newMedications[index] = {
+                ...newMedications[index],
+                [field]: value
+            }
+            return {
+                ...prev,
+                medications: newMedications
+            }
+        })
+    }
+
+    const addMedication = () => {
+        setEditData(prev => ({
+            ...prev,
+            medications: [...prev.medications, { name: "", using: "" }]
+        }))
+    }
+
+    const removeMedication = (index) => {
+        setEditData(prev => {
+            const newMedications = [...prev.medications]
+            newMedications.splice(index, 1)
+            return {
+                ...prev,
+                medications: newMedications
+            }
+        })
+    }
+
+    const handleSaveEdit = () => {
+        updateVisit(
+            { id: visitId, ...editData },
+            {
+                onSuccess: () => {
+                    setIsEditModalOpen(false)
+                    // Refresh the visit data
+                    window.location.reload()
+                },
+                onError: (error) => {
+                    alert("حدث خطأ أثناء تحديث بيانات الكشف: " + error.message)
+                }
+            }
+        )
     }
 
     if (isLoading) {
         return (
             <div className="space-y-8" dir="rtl">
                 <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                        <h1 className="text-3xl font-bold">تفاصيل الكشف</h1>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <h1 className="text-2xl sm:text-3xl font-bold">تفاصيل الكشف</h1>
                         <Button
                             variant="ghost"
-                            className="gap-2"
+                            className="gap-2 w-full sm:w-auto"
                             onClick={() => navigate(-1)}>
                             رجوع <ArrowLeft className="size-4" />
                         </Button>
@@ -114,7 +217,7 @@ ${visit.medications && Array.isArray(visit.medications) && visit.medications.len
                         <SkeletonLine width={180} height={20} />
                     </CardHeader>
                     <CardContent>
-                        <div className="grid sm:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {Array.from({ length: 4 }).map((_, i) => (
                                 <div
                                     key={i}
@@ -136,11 +239,11 @@ ${visit.medications && Array.isArray(visit.medications) && visit.medications.len
         return (
             <div className="space-y-8" dir="rtl">
                 <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                        <h1 className="text-3xl font-bold">تفاصيل الكشف</h1>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <h1 className="text-2xl sm:text-3xl font-bold">تفاصيل الكشف</h1>
                         <Button
                             variant="ghost"
-                            className="gap-2"
+                            className="gap-2 w-full sm:w-auto"
                             onClick={() => navigate(-1)}>
                             رجوع <ArrowLeft className="size-4" />
                         </Button>
@@ -158,11 +261,11 @@ ${visit.medications && Array.isArray(visit.medications) && visit.medications.len
     return (
         <div className="space-y-8" dir="rtl">
             <div className="space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                    <h1 className="text-3xl font-bold">تفاصيل الكشف</h1>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <h1 className="text-2xl sm:text-3xl font-bold">تفاصيل الكشف</h1>
                     <Button
                         variant="ghost"
-                        className="gap-2"
+                        className="gap-2 w-full sm:w-auto"
                         onClick={() => navigate(-1)}>
                         رجوع <ArrowLeft className="size-4" />
                     </Button>
@@ -174,16 +277,20 @@ ${visit.medications && Array.isArray(visit.medications) && visit.medications.len
 
             <Card>
                 <CardHeader>
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <h3 className="text-lg font-semibold">معلومات الكشف</h3>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
+                            <Button onClick={openEditModal} variant="outline" size="sm" className="w-full sm:w-auto">
+                                <Edit className="size-4 ml-1" />
+                                تعديل
+                            </Button>
                             {visit?.medications && visit.medications.length > 0 && (
                                 <>
-                                    <Button onClick={handleWhatsAppShare} variant="outline" size="sm">
+                                    <Button onClick={openWhatsAppModal} variant="outline" size="sm" className="w-full sm:w-auto">
                                         <MessageCircle className="size-4 ml-1" />
                                         مشاركة واتساب
                                     </Button>
-                                    <Button onClick={handleGeneratePdf} variant="outline" size="sm">
+                                    <Button onClick={handleGeneratePdf} variant="outline" size="sm" className="w-full sm:w-auto">
                                         <Printer className="size-4 ml-1" />
                                         طباعة الروشتة
                                     </Button>
@@ -193,7 +300,7 @@ ${visit.medications && Array.isArray(visit.medications) && visit.medications.len
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="rounded-[var(--radius)] border border-border p-3">
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <Calendar className="size-4" />
@@ -225,23 +332,11 @@ ${visit.medications && Array.isArray(visit.medications) && visit.medications.len
                         </div>
 
                         <div className="sm:col-span-2 rounded-[var(--radius)] border border-border p-3">
-                            <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground mb-2">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm text-muted-foreground mb-2">
                                 <div className="flex items-center gap-2">
                                     <Pill className="size-4" />
                                     الأدوية
                                 </div>
-                                {visit?.medications && visit.medications.length > 0 && (
-                                    <div className="flex gap-2">
-                                        <Button onClick={handleWhatsAppShare} variant="outline" size="sm">
-                                            <MessageCircle className="size-4 ml-1" />
-                                            مشاركة واتساب
-                                        </Button>
-                                        <Button onClick={handleGeneratePdf} variant="outline" size="sm">
-                                            <Download className="size-4 ml-1" />
-                                            طباعة
-                                        </Button>
-                                    </div>
-                                )}
                             </div>
                             {visit?.medications && visit.medications.length > 0 ? (
                                 <div className="space-y-3">
@@ -259,6 +354,148 @@ ${visit.medications && Array.isArray(visit.medications) && visit.medications.len
                     </div>
                 </CardContent>
             </Card>
+
+            {/* WhatsApp Number Selection Modal */}
+            <Dialog open={isWhatsAppModalOpen} onOpenChange={setIsWhatsAppModalOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>إرسال الروشتة عبر WhatsApp</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                            <Label htmlFor="phone" className="text-right sm:text-left">
+                                رقم الهاتف
+                            </Label>
+                            <div className="sm:col-span-3">
+                                <Input
+                                    id="phone"
+                                    value={whatsappNumber}
+                                    onChange={(e) => setWhatsappNumber(e.target.value)}
+                                    placeholder="أدخل رقم الهاتف"
+                                    className="w-full"
+                                />
+                                {visit?.patient?.phone && (
+                                    <p className="text-sm text-muted-foreground mt-2">
+                                        رقم المريض: {visit.patient.phone}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                        <div className="flex flex-col sm:flex-row justify-end gap-2">
+                            <Button variant="outline" onClick={() => setIsWhatsAppModalOpen(false)} className="w-full sm:w-auto">
+                                إلغاء
+                            </Button>
+                            <Button onClick={handleWhatsAppShare} disabled={!whatsappNumber.trim()} className="w-full sm:w-auto">
+                                إرسال
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Visit Modal */}
+            <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+                <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>تعديل بيانات الكشف</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-6 py-4">
+                        <div className="grid grid-cols-1 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="diagnosis">
+                                    التشخيص المبدئي
+                                </Label>
+                                <Input
+                                    id="diagnosis"
+                                    value={editData.diagnosis}
+                                    onChange={(e) => handleEditChange("diagnosis", e.target.value)}
+                                    placeholder="أدخل التشخيص المبدئي"
+                                    className="w-full"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="notes">
+                                    الملاحظات
+                                </Label>
+                                <Textarea
+                                    id="notes"
+                                    value={editData.notes}
+                                    onChange={(e) => handleEditChange("notes", e.target.value)}
+                                    placeholder="أدخل الملاحظات"
+                                    className="w-full"
+                                    rows={4}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center">
+                                    <Label>
+                                        الأدوية
+                                    </Label>
+                                    <Button 
+                                        variant="outline" 
+                                        onClick={addMedication}
+                                        size="sm"
+                                    >
+                                        إضافة دواء
+                                    </Button>
+                                </div>
+                                
+                                <div className="space-y-3">
+                                    {editData.medications.map((med, index) => (
+                                        <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-2 p-3 border border-border rounded-md">
+                                            <div className="md:col-span-2">
+                                                <Input
+                                                    value={med.name}
+                                                    onChange={(e) => handleMedicationChange(index, "name", e.target.value)}
+                                                    placeholder="اسم الدواء"
+                                                />
+                                            </div>
+                                            <div className="md:col-span-2">
+                                                <Input
+                                                    value={med.using}
+                                                    onChange={(e) => handleMedicationChange(index, "using", e.target.value)}
+                                                    placeholder="طريقة الاستخدام"
+                                                />
+                                            </div>
+                                            <div className="md:col-span-1">
+                                                <Button 
+                                                    variant="destructive" 
+                                                    size="sm"
+                                                    onClick={() => removeMedication(index)}
+                                                    className="w-full"
+                                                >
+                                                    حذف
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    
+                                    {editData.medications.length === 0 && (
+                                        <div className="text-center py-4 text-muted-foreground">
+                                            لا توجد أدوية مضافة حالياً
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4">
+                            <Button variant="outline" onClick={() => setIsEditModalOpen(false)} className="w-full sm:w-auto">
+                                إلغاء
+                            </Button>
+                            <Button 
+                                onClick={handleSaveEdit} 
+                                disabled={isUpdating}
+                                className="w-full sm:w-auto"
+                            >
+                                {isUpdating ? "جاري الحفظ..." : "حفظ التغييرات"}
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

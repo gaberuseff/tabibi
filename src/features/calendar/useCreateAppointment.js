@@ -9,6 +9,9 @@ export default function useCreateAppointment() {
         mutationFn: createAppointment,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["appointments"] })
+            // Also invalidate dashboard stats to update the counts
+            queryClient.invalidateQueries({ queryKey: ["dashboardStats"] })
+            queryClient.invalidateQueries({ queryKey: ["filteredPatientStats"] })
             toast.success("تم إضافة الموعد بنجاح")
         },
         onError: (error) => {

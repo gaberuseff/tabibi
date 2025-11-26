@@ -52,7 +52,8 @@ export async function getVisitById(visitId) {
       diagnosis,
       notes,
       medications,
-      created_at
+      created_at,
+      patient:patients(phone, name)
     `)
         .eq("id", visitId)
         .eq("clinic_id", userData.clinic_id)

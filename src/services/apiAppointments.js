@@ -26,7 +26,7 @@ export async function getAppointments(search, page, pageSize, filters = {}) {
       patient:patients(id, name, phone)
     `, { count: "exact" })
         .eq("clinic_id", userData.clinic_id)
-        .order("date", { ascending: true })
+        .order("created_at", { ascending: false })
         .range(from, to)
 
     // Apply date filter if provided

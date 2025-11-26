@@ -1,7 +1,7 @@
-export default async function generatePrescriptionPdfNew(visit, doctorName, clinicName, clinicAddress) {
-    try {
-        // Create a minimalist, eye-friendly HTML version for printing
-        const printContent = `
+export default async function generatePrescriptionPdfNew(visit, doctorName, clinicName, clinicAddress, shareViaWhatsApp = false) {
+  try {
+    // Create a minimalist, eye-friendly HTML version for printing
+    const printContent = `
       <!DOCTYPE html>
       <html dir="rtl" lang="ar">
       <head>
@@ -198,7 +198,7 @@ export default async function generatePrescriptionPdfNew(visit, doctorName, clin
             <div class="section-title">الأدوية الموصوفة</div>
             <div class="medications-list">
               ${visit.medications && Array.isArray(visit.medications) && visit.medications.length > 0
-                ? visit.medications.map((med, index) => `
+        ? visit.medications.map((med, index) => `
                     <div class="medication-item">
                       <div class="med-number">${index + 1}.</div>
                       <div class="med-details">
@@ -207,8 +207,8 @@ export default async function generatePrescriptionPdfNew(visit, doctorName, clin
                       </div>
                     </div>
                   `).join('')
-                : '<div class="no-medications">لا توجد أدوية محددة</div>'
-            }
+        : '<div class="no-medications">لا توجد أدوية محددة</div>'
+      }
             </div>
           </div>
           
@@ -225,48 +225,54 @@ export default async function generatePrescriptionPdfNew(visit, doctorName, clin
       </html>
     `;
 
-        // Create hidden iframe for printing
-        const iframe = document.createElement('iframe');
-        iframe.style.position = 'absolute';
-        iframe.style.top = '-1000px';
-        iframe.style.left = '-1000px';
-        iframe.style.width = '100%';
-        iframe.style.height = '100vh';
-        iframe.style.border = 'none';
-
-        document.body.appendChild(iframe);
-
-        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-        iframeDoc.open();
-        iframeDoc.write(printContent);
-        iframeDoc.close();
-
-        // Wait for content to load then print
-        iframe.onload = function () {
-            iframe.contentWindow.focus();
-            iframe.contentWindow.print();
-
-            // Remove iframe after printing
-            setTimeout(() => {
-                document.body.removeChild(iframe);
-            }, 1000);
-        };
-
-        // Fallback for download with patient name if needed
-        const patientName = visit.patient_name || 'مريض';
-        const fileName = `روشتة-${patientName.replace(/\s+/g, '_')}-${new Date().toLocaleDateString('ar-EG')}.html`;
-
-        // Create blob and download link for fallback
-        const blob = new Blob([printContent], { type: 'text/html;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-
-        // Store the download information in case of popup blocker
-        window.prescriptionDownloadInfo = {
-            url: url,
-            fileName: fileName
-        };
-    } catch (error) {
-        console.error("Error generating prescription:", error);
-        alert("حدث خطأ أثناء إنشاء الروشتة. يرجى المحاولة مرة أخرى.");
+    if (shareViaWhatsApp) {
+      // Return blob for WhatsApp sharing
+      const blob = new Blob([printContent], { type: 'text/html;charset=utf-8' });
+      return { blob, content: printContent };
     }
+
+    // Create hidden iframe for printing
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'absolute';
+    iframe.style.top = '-1000px';
+    iframe.style.left = '-1000px';
+    iframe.style.width = '100%';
+    iframe.style.height = '100vh';
+    iframe.style.border = 'none';
+
+    document.body.appendChild(iframe);
+
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+    iframeDoc.open();
+    iframeDoc.write(printContent);
+    iframeDoc.close();
+
+    // Wait for content to load then print
+    iframe.onload = function () {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+
+      // Remove iframe after printing
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 1000);
+    };
+
+    // Fallback for download with patient name if needed
+    const patientName = visit.patient_name || 'مريض';
+    const fileName = `روشتة-${patientName.replace(/\s+/g, '_')}-${new Date().toLocaleDateString('ar-EG')}.html`;
+
+    // Create blob and download link for fallback
+    const blob = new Blob([printContent], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+
+    // Store the download information in case of popup blocker
+    window.prescriptionDownloadInfo = {
+      url: url,
+      fileName: fileName
+    };
+  } catch (error) {
+    console.error("Error generating prescription:", error);
+    alert("حدث خطأ أثناء إنشاء الروشتة. يرجى المحاولة مرة أخرى.");
+  }
 }

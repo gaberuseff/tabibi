@@ -20,10 +20,6 @@ export async function getDashboardStats() {
     const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString()
     const endOfDay = new Date(today.setHours(23, 59, 59, 999)).toISOString()
 
-    // Get this month's date range
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString()
-    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999).toISOString()
-
     // 1. Get total patients count
     const { count: totalPatients, error: patientsError } = await supabase
         .from("patients")
@@ -42,17 +38,7 @@ export async function getDashboardStats() {
 
     if (appointmentsError) throw appointmentsError
 
-    // 3. Get updated patients count (patients with recent appointments)
-    const { count: updatedPatients, error: updatedPatientsError } = await supabase
-        .from("appointments")
-        .select("patient_id", { count: "exact", head: true })
-        .eq("clinic_id", clinicId)
-        .gte("date", startOfMonth)
-        .lte("date", endOfMonth)
-
-    if (updatedPatientsError) throw updatedPatientsError
-
-    // 4. Get pending appointments count
+    // 3. Get pending appointments count
     const { count: pendingAppointments, error: pendingError } = await supabase
         .from("appointments")
         .select("*", { count: "exact", head: true })
@@ -64,8 +50,56 @@ export async function getDashboardStats() {
     return {
         totalPatients: totalPatients || 0,
         todayAppointments: todayAppointments || 0,
-        updatedPatients: updatedPatients || 0,
         pendingAppointments: pendingAppointments || 0
+    }
+}
+
+// New function to get filtered patient counts
+export async function getFilteredPatientStats(filter) {
+    // Get current user's clinic_id
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) throw new Error("Not authenticated")
+
+    const { data: userData } = await supabase
+        .from("users")
+        .select("clinic_id")
+        .eq("user_id", session.user.id)
+        .single()
+
+    if (!userData?.clinic_id) throw new Error("User has no clinic assigned")
+
+    const clinicId = userData.clinic_id
+
+    // Calculate date range based on filter
+    const today = new Date()
+    let startDate
+
+    switch (filter) {
+        case "week":
+            startDate = new Date(today.setDate(today.getDate() - 7)).toISOString()
+            break
+        case "month":
+            startDate = new Date(today.setMonth(today.getMonth() - 1)).toISOString()
+            break
+        case "threeMonths":
+            startDate = new Date(today.setMonth(today.getMonth() - 3)).toISOString()
+            break
+        default:
+            startDate = new Date(today.setMonth(today.getMonth() - 1)).toISOString()
+    }
+
+    // Get filtered patients count (patients with appointments in the date range)
+    const { count: filteredPatients, error: filteredPatientsError } = await supabase
+        .from("appointments")
+        .select("patient_id", { count: "exact", head: true })
+        .eq("clinic_id", clinicId)
+        .gte("date", startDate)
+        .lte("date", new Date().toISOString())
+
+    if (filteredPatientsError) throw filteredPatientsError
+
+    return {
+        filteredPatients: filteredPatients || 0
     }
 }
 

@@ -29,6 +29,9 @@ export default function AppointmentsTable({ appointments, total, page, pageSize,
     mutationFn: ({ id, status }) => updateAppointment(id, { status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointments"] })
+      // Also invalidate dashboard stats to update the counts
+      queryClient.invalidateQueries({ queryKey: ["dashboardStats"] })
+      queryClient.invalidateQueries({ queryKey: ["filteredPatientStats"] })
       toast.success("تم تحديث حالة الحجز بنجاح")
     },
     onError: (error) => {
