@@ -32,6 +32,10 @@ export function DialogContent({children}) {
   return <div className="p-6">{children}</div>;
 }
 
+export function DialogTitle({children}) {
+  return <h1 className="text-lg font-semibold leading-none tracking-tight">{children}</h1>;
+}
+
 export function DialogFooter({children}) {
   return (
     <div className="p-6 border-t border-border flex justify-end gap-2">

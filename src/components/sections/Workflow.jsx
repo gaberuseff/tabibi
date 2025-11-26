@@ -1,8 +1,12 @@
-import { Card, CardContent, CardFooter, CardHeader } from "../ui/card"
-import { Button } from "../ui/button"
 import { CheckCircle2 } from "lucide-react"
+import { Link } from "react-router-dom"
+import { useAuth } from "../../features/auth/AuthContext"
+import { Button } from "../ui/button"
+import { Card, CardContent, CardFooter, CardHeader } from "../ui/card"
 
 export default function Workflow() {
+  const { user, isLoading } = useAuth()
+
   return (
     <section id="workflow" className="container py-20">
       <Card>
@@ -25,10 +29,28 @@ export default function Workflow() {
           </div>
         </CardContent>
         <CardFooter className="flex justify-center">
-          <Button className="gap-2"><CheckCircle2 className="size-5" />جرّبه الآن</Button>
+          {isLoading ? (
+            // Show loading state
+            <div className="h-12 w-40 bg-gray-200 rounded animate-pulse"></div>
+          ) : user ? (
+            // If user is authenticated, show "الدخول" button
+            <Link to="/dashboard">
+              <Button className="gap-2">
+                <CheckCircle2 className="size-5" />
+                الدخول
+              </Button>
+            </Link>
+          ) : (
+            // If user is not authenticated, show signup button
+            <Link to="/signup">
+              <Button className="gap-2">
+                <CheckCircle2 className="size-5" />
+                جرّبه الآن
+              </Button>
+            </Link>
+          )}
         </CardFooter>
       </Card>
     </section>
   )
 }
-

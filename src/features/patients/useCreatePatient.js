@@ -5,8 +5,9 @@ export default function useCreatePatient() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: createPatient,
-    onSuccess: () => {
+    onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["patients"] })
+      return data
     },
   })
 }

@@ -1,0 +1,190 @@
+import supabase from "./supabase"
+
+export async function getAppointments(search, page, pageSize, filters = {}) {
+    // Get current user's clinic_id
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) throw new Error("Not authenticated")
+
+    const { data: userData } = await supabase
+        .from("users")
+        .select("clinic_id")
+        .eq("user_id", session.user.id)
+        .single()
+
+    if (!userData?.clinic_id) throw new Error("User has no clinic assigned")
+
+    const from = Math.max(0, (page - 1) * pageSize)
+    const to = from + pageSize - 1
+
+    let query = supabase
+        .from("appointments")
+        .select(`
+      id,
+      date,
+      notes,
+      status,
+      patient:patients(id, name, phone)
+    `, { count: "exact" })
+        .eq("clinic_id", userData.clinic_id)
+        .order("date", { ascending: true })
+        .range(from, to)
+
+    // Apply date filter if provided
+    if (filters.date) {
+        // Filter appointments for the specific date
+        const startDate = new Date(filters.date)
+        startDate.setHours(0, 0, 0, 0)
+        const endDate = new Date(filters.date)
+        endDate.setHours(23, 59, 59, 999)
+
+        query = query.gte('date', startDate.toISOString())
+        query = query.lte('date', endDate.toISOString())
+    }
+
+    // Apply status filter if provided
+    if (filters.status) {
+        query = query.eq('status', filters.status)
+    }
+
+    // Apply search filter
+    if (search && search.trim()) {
+        const s = `%${search.trim()}%`
+        query = query.or(`notes.ilike.${s},patients.name.ilike.${s},patients.phone.ilike.${s}`)
+    }
+
+    const { data, error, count } = await query
+    if (error) throw error
+    return { items: data ?? [], total: count ?? 0 }
+}
+
+export async function createAppointment(payload) {
+    // Get current user's clinic_id
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) throw new Error("Not authenticated")
+
+    const { data: userData } = await supabase
+        .from("users")
+        .select("clinic_id")
+        .eq("user_id", session.user.id)
+        .single()
+
+    if (!userData?.clinic_id) throw new Error("User has no clinic assigned")
+
+    // Add clinic_id to the appointment data
+    const appointmentData = {
+        ...payload,
+        clinic_id: userData.clinic_id,
+        status: "pending"
+    }
+
+    const { data, error } = await supabase
+        .from("appointments")
+        .insert(appointmentData)
+        .select()
+        .single()
+
+    if (error) throw error
+    return data
+}
+
+export async function updateAppointment(id, payload) {
+    // Get current user's clinic_id for security
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) throw new Error("Not authenticated")
+
+    const { data: userData } = await supabase
+        .from("users")
+        .select("clinic_id")
+        .eq("user_id", session.user.id)
+        .single()
+
+    if (!userData?.clinic_id) throw new Error("User has no clinic assigned")
+
+    const { data, error } = await supabase
+        .from("appointments")
+        .update(payload)
+        .eq("id", id)
+        .eq("clinic_id", userData.clinic_id)
+        .select()
+        .single()
+
+    if (error) throw error
+    return data
+}
+
+export async function deleteAppointment(id) {
+    // Get current user's clinic_id for security
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) throw new Error("Not authenticated")
+
+    const { data: userData } = await supabase
+        .from("users")
+        .select("clinic_id")
+        .eq("user_id", session.user.id)
+        .single()
+
+    if (!userData?.clinic_id) throw new Error("User has no clinic assigned")
+
+    const { error } = await supabase
+        .from("appointments")
+        .delete()
+        .eq("id", id)
+        .eq("clinic_id", userData.clinic_id)
+
+    if (error) throw error
+}
+
+export async function searchPatients(searchTerm) {
+    // Get current user's clinic_id
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) throw new Error("Not authenticated")
+
+    const { data: userData } = await supabase
+        .from("users")
+        .select("clinic_id")
+        .eq("user_id", session.user.id)
+        .single()
+
+    if (!userData?.clinic_id) throw new Error("User has no clinic assigned")
+
+    const s = `%${searchTerm.trim()}%`
+    const { data, error } = await supabase
+        .from("patients")
+        .select("id, name, phone")
+        .eq("clinic_id", userData.clinic_id)
+        .or(`name.ilike.${s},phone.ilike.${s}`)
+        .limit(5)
+
+    if (error) throw error
+    return data ?? []
+}
+
+// New function to get appointments for a specific patient
+export async function getAppointmentsByPatientId(patientId) {
+    // Get current user's clinic_id
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) throw new Error("Not authenticated")
+
+    const { data: userData } = await supabase
+        .from("users")
+        .select("clinic_id")
+        .eq("user_id", session.user.id)
+        .single()
+
+    if (!userData?.clinic_id) throw new Error("User has no clinic assigned")
+
+    const { data, error } = await supabase
+        .from("appointments")
+        .select(`
+      id,
+      date,
+      notes,
+      status
+    `)
+        .eq("clinic_id", userData.clinic_id)
+        .eq("patient_id", patientId)
+        .order("date", { ascending: false })
+
+    if (error) throw error
+    return data ?? []
+}

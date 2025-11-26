@@ -5,9 +5,9 @@ import { Button } from "../../components/ui/button";
 import { Card, CardContent } from "../../components/ui/card";
 import DataTable from "../../components/ui/table";
 
-export default function PatientsTable({patients, total, page, pageSize, onPageChange}) {
+export default function PatientsTable({ patients, total, page, pageSize, onPageChange }) {
   const columns = [
-    {header: "الاسم", accessor: "name", cellClassName: "font-medium"},
+    { header: "الاسم", accessor: "name", cellClassName: "font-medium" },
     {
       header: "الهاتف",
       accessor: "phone",
@@ -27,7 +27,7 @@ export default function PatientsTable({patients, total, page, pageSize, onPageCh
     {
       header: "الإجراء",
       render: (p) => (
-        <Link to={`/doctor/patients/${p.id}`}>
+        <Link to={`/patients/${p.id}`}>
           <Button variant="outline" className="gap-2">
             <Eye className="size-4" />
             عرض
@@ -40,7 +40,8 @@ export default function PatientsTable({patients, total, page, pageSize, onPageCh
   return (
     <Card>
       <CardContent className="p-0">
-        <DataTable columns={columns} data={patients ?? []} total={total} page={page} pageSize={pageSize} onPageChange={onPageChange} />
+        <DataTable columns={columns} data={patients ?? []} 
+        total={total} page={page} pageSize={pageSize} onPageChange={onPageChange} />
       </CardContent>
     </Card>
   );

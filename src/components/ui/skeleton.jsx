@@ -14,3 +14,4 @@ export function SkeletonBlock({ lines = 3 }) {
   )
 }
 
+export default Skeleton

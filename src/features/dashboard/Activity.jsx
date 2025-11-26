@@ -1,8 +1,25 @@
-import {Card, CardContent, CardHeader} from "../../components/ui/card";
-import {Badge} from "../../components/ui/badge";
-import {CalendarDays, Stethoscope, Receipt} from "lucide-react";
+import { Card, CardContent, CardHeader } from "../../components/ui/card";
+import { Badge } from "../../components/ui/badge";
+import { CalendarDays, Stethoscope, Receipt } from "lucide-react";
+import useRecentActivity from "./useRecentActivity";
+import { SkeletonLine } from "../../components/ui/skeleton";
 
-function Item({icon: Icon, title, time, tag}) {
+function Item({ icon: Icon, title, time, tag, isLoading }) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-between gap-3 py-2">
+        <div className="flex items-center gap-3">
+          <div className="size-8 rounded-[calc(var(--radius)-6px)] bg-muted animate-pulse" />
+          <div className="space-y-2">
+            <SkeletonLine className="h-3 w-24" />
+            <SkeletonLine className="h-2 w-16" />
+          </div>
+        </div>
+        <SkeletonLine className="h-5 w-12" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center justify-between gap-3 py-2">
       <div className="flex items-center gap-3">
@@ -20,6 +37,8 @@ function Item({icon: Icon, title, time, tag}) {
 }
 
 export default function Activity() {
+  const { data: activities, isLoading } = useRecentActivity();
+
   return (
     <Card>
       <CardHeader>
@@ -27,18 +46,28 @@ export default function Activity() {
       </CardHeader>
       <CardContent>
         <div className="divide-y divide-border">
-          <Item
-            icon={CalendarDays}
-            title="حجز موعد - أحمد"
-            time="اليوم 10:30 ص"
-            tag="جديد"
-          />
-          <Item
-            icon={Stethoscope}
-            title="زيارة مكتملة - سارة"
-            time="أمس 4:05 م"
-          />
-          <Item icon={Receipt} title="فاتورة مدفوعة - خالد" time="قبل 3 أيام" />
+          {isLoading
+            ? Array.from({ length: 3 }).map((_, i) => (
+                <Item key={i} isLoading={true} />
+              ))
+            : activities && activities.length > 0
+            ? activities.map((activity) => (
+                <Item
+                  key={activity.id}
+                  icon={CalendarDays}
+                  title={activity.title}
+                  time={activity.time}
+                  tag={activity.tag}
+                />
+              ))
+            : Array.from({ length: 3 }).map((_, i) => (
+                <Item
+                  key={i}
+                  icon={CalendarDays}
+                  title="لا توجد أنشطة حديثة"
+                  time="الآن"
+                />
+              ))}
         </div>
       </CardContent>
     </Card>

@@ -1,8 +1,12 @@
 import { Button } from "../ui/button"
 import { Sparkles, Stethoscope, Smartphone, Receipt } from "lucide-react"
 import { Card, CardContent } from "../ui/card"
+import { Link } from "react-router-dom"
+import { useAuth } from "../../features/auth/AuthContext"
 
 export default function Hero() {
+  const { user, isLoading } = useAuth()
+
   return (
     <section className="container py-24">
       <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -18,14 +22,42 @@ export default function Hero() {
             كل ما تحتاجه من المواعيد والملف الطبي الإلكتروني إلى الفواتير والتقارير، مع روشتة PDF تُرسل تلقائياً عبر واتساب.
           </p>
           <div className="flex flex-wrap gap-4">
-            <Button className="gap-2">
-              <Stethoscope className="size-5" />
-              ابدأ التجربة المجانية
-            </Button>
-            <Button variant="outline" className="gap-2">
-              <Smartphone className="size-5" />
-              شاهد العرض التوضيحي
-            </Button>
+            {isLoading ? (
+              // Show loading state
+              <div className="flex gap-4">
+                <div className="h-12 w-40 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-12 w-40 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            ) : user ? (
+              // If user is authenticated, show "الدخول" button
+              <>
+                <Link to="/dashboard">
+                  <Button className="gap-2">
+                    <Stethoscope className="size-5" />
+                    الدخول
+                  </Button>
+                </Link>
+                  <Button variant="outline" className="gap-2">
+                    <Smartphone className="size-5" />
+                    مشاهدة العرض الترويجى
+                  </Button>
+
+              </>
+            ) : (
+              // If user is not authenticated, show signup buttons
+              <>
+                <Link to="/signup">
+                  <Button className="gap-2">
+                    <Stethoscope className="size-5" />
+                    ابدأ التجربة المجانية
+                  </Button>
+                </Link>
+                  <Button variant="outline" className="gap-2">
+                    <Smartphone className="size-5" />
+                      مشاهدة العرض الترويجى
+                  </Button>
+              </>
+            )}
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6">
             <Card className="text-center">
@@ -72,4 +104,3 @@ export default function Hero() {
     </section>
   )
 }
-

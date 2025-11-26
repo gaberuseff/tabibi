@@ -10,7 +10,7 @@ import useCreatePatient from "./useCreatePatient";
 import PatientForm from "./PatientForm";
 import toast from "react-hot-toast";
 
-export default function PatientCreateDialog({open, onClose}) {
+export default function PatientCreateDialog({open, onClose, onPatientCreated}) {
   const {
     register,
     handleSubmit,
@@ -29,9 +29,13 @@ export default function PatientCreateDialog({open, onClose}) {
         date_of_birth: values.date_of_birth,
         blood_type: values.blood_type || null,
       };
-      await mutateAsync(payload);
+      console.log(payload);
+      const newPatient = await mutateAsync(payload);
       toast.success("تم إضافة المريض بنجاح");
       reset();
+      if (onPatientCreated) {
+        onPatientCreated(newPatient);
+      }
       onClose?.();
     } catch (e) {
       toast.error("حدث خطأ أثناء الإضافة");

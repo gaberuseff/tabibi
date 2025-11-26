@@ -1,9 +1,11 @@
-import Header from "../components/layout/Header";
-import Footer from "../components/layout/Footer";
-import Hero from "../components/sections/Hero";
-import Features from "../components/sections/Features";
-import Workflow from "../components/sections/Workflow";
-import Pricing from "../components/sections/Pricing";
+import { useEffect } from "react"
+import { useNavigate } from "react-router-dom"
+import Header from "../components/layout/Header"
+import Footer from "../components/layout/Footer"
+import Hero from "../components/sections/Hero"
+import Features from "../components/sections/Features"
+import Workflow from "../components/sections/Workflow"
+import Pricing from "../components/sections/Pricing"
 
 export default function Landing() {
   return (
