@@ -69,6 +69,12 @@ export default function AppointmentsTable({ appointments, total, page, pageSize,
       cellClassName: "text-muted-foreground",
     },
     {
+      header: "السعر (جنيه)",
+      accessor: "price",
+      cellClassName: "text-muted-foreground",
+      render: (appointment) => appointment.price ? appointment.price.toFixed(2) : "0.00"
+    },
+    {
       header: "الحالة",
       accessor: "status",
       render: (appointment) => (

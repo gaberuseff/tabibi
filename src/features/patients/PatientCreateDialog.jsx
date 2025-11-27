@@ -10,7 +10,7 @@ import useCreatePatient from "./useCreatePatient";
 import PatientForm from "./PatientForm";
 import toast from "react-hot-toast";
 
-export default function PatientCreateDialog({open, onClose, onPatientCreated}) {
+export default function PatientCreateDialog({open, onClose, onPatientCreated, clinicId}) {
   const {
     register,
     handleSubmit,
@@ -28,6 +28,7 @@ export default function PatientCreateDialog({open, onClose, onPatientCreated}) {
         address: values.address || null,
         date_of_birth: values.date_of_birth,
         blood_type: values.blood_type || null,
+        clinic_id: clinicId
       };
       console.log(payload);
       const newPatient = await mutateAsync(payload);

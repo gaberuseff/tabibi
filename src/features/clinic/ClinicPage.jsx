@@ -28,87 +28,78 @@ function SecretarySkeleton() {
         <div className="flex items-center justify-between p-4 border border-border rounded-lg">
             <div className="space-y-2">
                 <SkeletonLine className="h-4 w-32" />
-                <SkeletonLine className="h-3 w-24" />
-                <SkeletonLine className="h-3 w-40" />
+                <SkeletonLine className="h-4 w-24" />
             </div>
-            <SkeletonLine className="h-3 w-20" />
+            <SkeletonLine className="h-10 w-24" />
         </div>
     )
 }
 
 function SecretaryItem({ secretary, onUpdatePermissions }) {
     const [isOpen, setIsOpen] = useState(false)
-    const [selectedPermissions, setSelectedPermissions] = useState([])
-    
-    // Update selected permissions when secretary data changes or dialog opens
-    useEffect(() => {
-        // Set permissions when dialog opens
-        if (isOpen) {
-            // Ensure permissions is always an array
-            setSelectedPermissions(Array.isArray(secretary.permissions) ? secretary.permissions : [])
-        }
-    }, [isOpen, secretary.permissions])
-    
+    const [selectedPermissions, setSelectedPermissions] = useState(secretary.permissions || [])
+
     const handlePermissionChange = (permissionId) => {
         setSelectedPermissions(prev => {
-            // Ensure prev is an array
-            const currentPermissions = Array.isArray(prev) ? prev : []
-            
-            return currentPermissions.includes(permissionId) 
-                ? currentPermissions.filter(id => id !== permissionId)
-                : [...currentPermissions, permissionId]
+            if (prev.includes(permissionId)) {
+                return prev.filter(p => p !== permissionId)
+            } else {
+                return [...prev, permissionId]
+            }
         })
     }
-    
+
     const handleSavePermissions = () => {
         onUpdatePermissions(secretary.user_id, selectedPermissions)
         setIsOpen(false)
     }
-    
+
     return (
-        <div className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors">
-            <div className="space-y-1">
-                <h3 className="font-medium">{secretary.name}</h3>
-                <p className="text-sm text-muted-foreground">{secretary.email}</p>
-                <p className="text-sm text-muted-foreground">{secretary.phone}</p>
+        <div className="flex items-center justify-between p-4 border border-border rounded-lg">
+            <div>
+                <div className="font-medium">{secretary.name}</div>
+                <div className="text-sm text-muted-foreground">{secretary.email}</div>
             </div>
             <div className="flex items-center gap-2">
-                <div className="text-sm text-muted-foreground">
-                    {secretary.created_at && format(new Date(secretary.created_at), "dd MMM yyyy", { locale: arSA })}
-                </div>
                 <Button variant="outline" size="sm" onClick={() => setIsOpen(true)}>
-                    إدارة الصلاحيات
+                    تعديل الصلاحيات
                 </Button>
-                <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>صلاحيات السكرتير: {secretary.name}</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4 py-4">
-                            <div className="space-y-3">
+            </div>
+
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                <DialogContent dir="rtl">
+                    <DialogHeader>
+                        <DialogTitle>تعديل صلاحيات السكرتير</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div>
+                            <h4 className="font-medium mb-2">الصلاحيات المتوفرة</h4>
+                            <div className="space-y-2">
                                 {AVAILABLE_PERMISSIONS.map((permission) => (
-                                    <div key={permission.id} className="flex items-center gap-3">
+                                    <div key={permission.id} className="flex items-center gap-2">
                                         <Checkbox
                                             id={permission.id}
                                             checked={selectedPermissions.includes(permission.id)}
                                             onCheckedChange={() => handlePermissionChange(permission.id)}
                                         />
-                                        <Label htmlFor={permission.id}>{permission.label}</Label>
+                                        <label htmlFor={permission.id} className="text-sm">
+                                            {permission.label}
+                                        </label>
                                     </div>
                                 ))}
                             </div>
-                            <div className="flex justify-end gap-2 pt-4">
-                                <Button variant="outline" onClick={() => setIsOpen(false)}>
-                                    إلغاء
-                                </Button>
-                                <Button onClick={handleSavePermissions}>
-                                    حفظ التغييرات
-                                </Button>
-                            </div>
                         </div>
-                    </DialogContent>
-                </Dialog>
-            </div>
+                        <div className="flex justify-end gap-2 pt-4">
+                            <Button variant="outline" onClick={() => setIsOpen(false)}>
+                                إلغاء
+                            </Button>
+                            <Button onClick={handleSavePermissions}>
+                                حفظ التغييرات
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
@@ -122,14 +113,16 @@ export default function ClinicPage() {
     
     const [clinicFormData, setClinicFormData] = useState({
         name: "",
-        address: ""
+        address: "",
+        booking_price: ""
     });
 
     useEffect(() => {
         if (clinic) {
             setClinicFormData({
                 name: clinic.name || "",
-                address: clinic.address || ""
+                address: clinic.address || "",
+                booking_price: clinic.booking_price || ""
             });
         }
     }, [clinic]);
@@ -195,6 +188,43 @@ export default function ClinicPage() {
                                         onChange={handleClinicChange}
                                         placeholder="أدخل عنوان العيادة"
                                     />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="bookingPrice">سعر الحجز</Label>
+                                    <Input
+                                        id="bookingPrice"
+                                        name="booking_price"
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={clinicFormData.booking_price}
+                                        onChange={handleClinicChange}
+                                        placeholder="أدخل سعر الحجز"
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        سعر الحجز الذي سيظهر لمرضى العيادة عند الحجز
+                                    </p>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>رابط الحجز</Label>
+                                    <div className="flex gap-2">
+                                        <Input
+                                            value={`${window.location.origin}/booking/${user?.clinic_id}`}
+                                            readOnly
+                                        />
+                                        <Button 
+                                            type="button"
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(`${window.location.origin}/booking/${user?.clinic_id}`);
+                                                alert('تم نسخ الرابط إلى الحافظة');
+                                            }}
+                                        >
+                                            نسخ
+                                        </Button>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        شارك هذا الرابط مع مرضاك لحجز المواعيد
+                                    </p>
                                 </div>
                                 <div className="space-y-2">
                                     <Label>معرف العيادة</Label>

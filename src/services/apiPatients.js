@@ -32,8 +32,6 @@ export async function getPatients(search, page, pageSize) {
 }
 
 export async function createPatient(payload) {
-  console.log("Creating patient with payload:", payload)
-
   // Get current user's clinic_id
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error("Not authenticated")
@@ -49,10 +47,9 @@ export async function createPatient(payload) {
   // Add clinic_id to the patient data
   const patientData = {
     ...payload,
-    clinic_id: userData.clinic_id
+    clinic_id: payload.clinic_id || userData.clinic_id
   }
 
-  console.log("Inserting patient with data:", patientData)
 
   const { data, error } = await supabase
     .from("patients")
@@ -64,8 +61,6 @@ export async function createPatient(payload) {
     console.error("Error creating patient:", error)
     throw error
   }
-
-  console.log("Patient created successfully:", data)
   return data
 }
 
@@ -115,4 +110,3 @@ export async function updatePatient(id, payload) {
   if (error) throw error
   return data
 }
-

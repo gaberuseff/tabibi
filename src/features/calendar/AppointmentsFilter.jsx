@@ -18,26 +18,42 @@ const statusOptions = [
   { value: "cancelled", label: "ملغي" },
 ]
 
+const timeOptions = [
+  { value: "upcoming", label: "القادمة" },
+  { value: "all", label: "الجميع" },
+]
+
 export default function AppointmentsFilter({ onFilterChange }) {
   const [date, setDate] = useState("")
   const [status, setStatus] = useState("all")
+  const [time, setTime] = useState("upcoming")
 
   const handleDateChange = (newDate) => {
     setDate(newDate)
     const statusValue = status === "all" ? "" : status
-    onFilterChange({ date: newDate, status: statusValue })
+    const timeValue = time === "upcoming" ? "upcoming" : "all"
+    onFilterChange({ date: newDate, status: statusValue, time: timeValue })
   }
 
   const handleStatusChange = (newStatus) => {
     setStatus(newStatus)
     const statusValue = newStatus === "all" ? "" : newStatus
-    onFilterChange({ date, status: statusValue })
+    const timeValue = time === "upcoming" ? "upcoming" : "all"
+    onFilterChange({ date, status: statusValue, time: timeValue })
+  }
+
+  const handleTimeChange = (newTime) => {
+    setTime(newTime)
+    const statusValue = status === "all" ? "" : status
+    const timeValue = newTime === "upcoming" ? "upcoming" : "all"
+    onFilterChange({ date, status: statusValue, time: timeValue })
   }
 
   const handleClearFilters = () => {
     setDate("")
     setStatus("all")
-    onFilterChange({ date: "", status: "" })
+    setTime("upcoming")
+    onFilterChange({ date: "", status: "", time: "upcoming" })
   }
 
   return (
@@ -61,6 +77,22 @@ export default function AppointmentsFilter({ onFilterChange }) {
             </SelectTrigger>
             <SelectContent>
               {statusOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium">الوقت</label>
+          <Select value={time} onValueChange={handleTimeChange}>
+            <SelectTrigger className="w-full sm:w-40">
+              <SelectValue placeholder="اختر الوقت" />
+            </SelectTrigger>
+            <SelectContent>
+              {timeOptions.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>

@@ -22,23 +22,33 @@ export async function getAppointments(search, page, pageSize, filters = {}) {
       id,
       date,
       notes,
+      price,
       status,
       patient:patients(id, name, phone)
     `, { count: "exact" })
         .eq("clinic_id", userData.clinic_id)
-        .order("created_at", { ascending: false })
         .range(from, to)
+
+    // Apply time filter - by default show only upcoming appointments
+    if (!filters.time || filters.time === "upcoming") {
+        const now = new Date().toISOString()
+        query = query.gte('date', now)
+    }
+
+    // Sort by appointment date ascending (closest first)
+    query = query.order("date", { ascending: true })
 
     // Apply date filter if provided
     if (filters.date) {
         // Filter appointments for the specific date
         const startDate = new Date(filters.date)
         startDate.setHours(0, 0, 0, 0)
-        const endDate = new Date(filters.date)
+        const endDate = new Date(startDate)
         endDate.setHours(23, 59, 59, 999)
 
-        query = query.gte('date', startDate.toISOString())
-        query = query.lte('date', endDate.toISOString())
+        query = query
+            .gte('date', startDate.toISOString())
+            .lte('date', endDate.toISOString())
     }
 
     // Apply status filter if provided
@@ -46,15 +56,40 @@ export async function getAppointments(search, page, pageSize, filters = {}) {
         query = query.eq('status', filters.status)
     }
 
-    // Apply search filter
-    if (search && search.trim()) {
-        const s = `%${search.trim()}%`
-        query = query.or(`notes.ilike.${s},patients.name.ilike.${s},patients.phone.ilike.${s}`)
-    }
-
     const { data, error, count } = await query
+
     if (error) throw error
     return { items: data ?? [], total: count ?? 0 }
+}
+
+// New function to create appointment for public booking (no authentication required)
+export async function createAppointmentPublic(payload, clinicId) {
+    console.log("Creating appointment with clinicId:", clinicId);
+    console.log("Clinic ID type:", typeof clinicId);
+
+    // Convert clinicId to BigInt for database operations
+    const clinicIdBigInt = BigInt(clinicId);
+
+    // Add clinic_id to the appointment data
+    const appointmentData = {
+        ...payload,
+        clinic_id: clinicIdBigInt,
+        status: "pending"
+    }
+
+    console.log("Appointment data to insert:", appointmentData);
+
+    const { data, error } = await supabase
+        .from("appointments")
+        .insert(appointmentData)
+        .select()
+        .single()
+
+    if (error) {
+        console.error("Error creating appointment:", error);
+        throw error
+    }
+    return data
 }
 
 export async function createAppointment(payload) {
@@ -159,6 +194,30 @@ export async function searchPatients(searchTerm) {
     return data ?? []
 }
 
+// New function for public booking - search patients by phone only
+export async function searchPatientsPublic(searchTerm, clinicId) {
+    console.log("Searching patients with clinicId:", clinicId);
+    console.log("Clinic ID type:", typeof clinicId);
+
+    // Convert clinicId to BigInt for database operations
+    const clinicIdBigInt = BigInt(clinicId);
+
+    // Only search by phone number for public booking
+    const s = `%${searchTerm.trim()}%`
+    const { data, error } = await supabase
+        .from("patients")
+        .select("id, name, phone")
+        .eq("clinic_id", clinicIdBigInt)
+        .ilike("phone", s)
+        .limit(5)
+
+    if (error) {
+        console.error("Error searching patients:", error);
+        throw error
+    }
+    return data ?? []
+}
+
 // New function to get appointments for a specific patient
 export async function getAppointmentsByPatientId(patientId) {
     // Get current user's clinic_id
@@ -179,11 +238,15 @@ export async function getAppointmentsByPatientId(patientId) {
       id,
       date,
       notes,
+      price,
       status
     `)
         .eq("clinic_id", userData.clinic_id)
         .eq("patient_id", patientId)
-        .order("date", { ascending: false })
+        // By default, show only upcoming appointments for patients
+        .gte('date', new Date().toISOString())
+        // Sort by appointment date ascending (closest first)
+        .order("date", { ascending: true })
 
     if (error) throw error
     return data ?? []

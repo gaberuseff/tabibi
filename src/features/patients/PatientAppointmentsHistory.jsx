@@ -40,8 +40,13 @@ export default function PatientAppointmentsHistory({ appointments, isLoading }) 
             {appointments.map((appointment) => (
               <div key={appointment.id} className="flex items-center justify-between p-3 rounded-[var(--radius)] border border-border">
                 <div className="flex-1">
-                  <div className="text-sm text-muted-foreground">
-                    {appointment.date ? format(new Date(appointment.date), "dd MMMM yyyy - hh:mm a", { locale: ar }) : "غير محدد"}
+                  <div className="flex justify-between">
+                    <div className="text-sm text-muted-foreground">
+                      {appointment.date ? format(new Date(appointment.date), "dd MMMM yyyy - hh:mm a", { locale: ar }) : "غير محدد"}
+                    </div>
+                    <div className="text-sm font-medium">
+                      {appointment.price ? `${appointment.price.toFixed(2)} جنيه` : "0.00 جنيه"}
+                    </div>
                   </div>
                   <div className="font-medium">{appointment.notes}</div>
                 </div>

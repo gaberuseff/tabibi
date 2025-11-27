@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS clinics (
   clinic_id BIGINT NOT NULL UNIQUE,
   name TEXT NOT NULL,
   address TEXT NOT NULL,
+  booking_price DECIMAL(10, 2) DEFAULT 0.00,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -62,6 +63,7 @@ CREATE TABLE IF NOT EXISTS appointments (
   patient_id UUID NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
   date TIMESTAMP WITH TIME ZONE NOT NULL,
   notes TEXT NOT NULL,
+  price DECIMAL(10, 2) DEFAULT 0.00,
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'completed', 'cancelled')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

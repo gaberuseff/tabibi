@@ -51,8 +51,8 @@ export default function SignupForm() {
 
     if (isValid) {
       if (currentStep === STEPS.PERSONAL_INFO && role === "doctor") {
-        // Generate clinic ID for doctor
-        const clinicId = generateClinicId()
+        // Generate clinic ID for doctor using phone number
+        const clinicId = generateClinicId(watch("phone"))
         setGeneratedClinicId(clinicId)
       }
       setCurrentStep((prev) => prev + 1)
@@ -104,7 +104,7 @@ export default function SignupForm() {
     // Generate clinic ID for doctor if not already generated
     let finalClinicId = generatedClinicId
     if (data.role === "doctor" && !finalClinicId) {
-      finalClinicId = generateClinicId()
+      finalClinicId = generateClinicId(data.phone)
       setGeneratedClinicId(finalClinicId)
     }
 

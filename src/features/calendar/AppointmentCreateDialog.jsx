@@ -36,10 +36,17 @@ export default function AppointmentCreateDialog({ open, onClose }) {
       return
     }
 
+    // Validate price
+    if (data.price === "" || isNaN(parseFloat(data.price)) || parseFloat(data.price) < 0) {
+      toast.error("سعر الحجز مطلوب ويجب أن يكون رقمًا موجبًا")
+      return
+    }
+
     createAppointment(
       {
         date: data.date,
         notes: data.notes,
+        price: parseFloat(data.price) || 0,
         patient_id: selectedPatient.id,
       },
       {
@@ -170,6 +177,31 @@ export default function AppointmentCreateDialog({ open, onClose }) {
               />
               {errors.date && (
                 <p className="text-sm text-red-500">{errors.date.message}</p>
+              )}
+            </div>
+
+            {/* Price */}
+            <div className="space-y-2">
+              <Label htmlFor="price">سعر الحجز (جنيه) *</Label>
+              <Input
+                id="price"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                {...register("price", { 
+                  required: "سعر الحجز مطلوب",
+                  min: { value: 0, message: "السعر يجب أن يكون رقمًا موجبًا" },
+                  validate: (value) => {
+                    if (value === "" || isNaN(parseFloat(value))) {
+                      return "سعر الحجز مطلوب ويجب أن يكون رقمًا"
+                    }
+                    return true
+                  }
+                })}
+              />
+              {errors.price && (
+                <p className="text-sm text-red-500">{errors.price.message}</p>
               )}
             </div>
 

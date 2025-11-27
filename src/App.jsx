@@ -1,20 +1,21 @@
 import { Toaster } from "react-hot-toast";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import DoctorLayout from "./components/layout/DoctorLayout";
-import Calendar from "./pages/doctor/Calendar";
-import Dashboard from "./pages/doctor/Dashboard";
-import Patients from "./pages/doctor/Patients";
+import { AuthProvider } from "./features/auth/AuthContext";
+import PermissionGuard from "./features/auth/PermissionGuard";
+import ProtectedRoute from "./features/auth/ProtectedRoute";
+import PublicRoute from "./features/auth/PublicRoute";
 import PatientDetailPage from "./features/patients/PatientDetailPage";
 import VisitDetailPage from "./features/patients/VisitDetailPage";
+import Booking from "./pages/Booking";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import Calendar from "./pages/doctor/Calendar";
 import Clinic from "./pages/doctor/Clinic";
+import Dashboard from "./pages/doctor/Dashboard";
+import Patients from "./pages/doctor/Patients";
 import Settings from "./pages/doctor/Settings";
-import { AuthProvider } from "./features/auth/AuthContext";
-import ProtectedRoute from "./features/auth/ProtectedRoute";
-import PublicRoute from "./features/auth/PublicRoute";
-import PermissionGuard from "./features/auth/PermissionGuard";
 
 function App() {
   return (
@@ -102,6 +103,7 @@ function App() {
               } 
             />
           </Route>
+          <Route path="/booking/:clinicId" element={<Booking />} />
         </Routes>
         <Toaster position="top-center" />
       </AuthProvider>
