@@ -47,10 +47,17 @@ export async function getDashboardStats() {
 
     if (pendingError) throw pendingError
 
+    // 4. Get total income from completed appointments using the SQL function
+    const { data: incomeData, error: incomeError } = await supabase
+        .rpc('get_clinic_completed_revenue', { target_clinic_id: clinicId })
+
+    if (incomeError) throw incomeError
+
     return {
         totalPatients: totalPatients || 0,
         todayAppointments: todayAppointments || 0,
-        pendingAppointments: pendingAppointments || 0
+        pendingAppointments: pendingAppointments || 0,
+        totalIncome: incomeData || 0
     }
 }
 
@@ -103,7 +110,7 @@ export async function getFilteredPatientStats(filter) {
     }
 }
 
-export async function getRecentActivity() {
+export async function getRecentActivity(page = 1, pageSize = 5) {
     // Get current user's clinic_id
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) throw new Error("Not authenticated")
@@ -118,6 +125,18 @@ export async function getRecentActivity() {
 
     const clinicId = userData.clinic_id
 
+    // Calculate range for pagination
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
+
+    // First get the total count
+    const { count: totalCount, error: countError } = await supabase
+        .from("appointments")
+        .select("*", { count: "exact", head: true })
+        .eq("clinic_id", clinicId)
+
+    if (countError) throw countError
+
     // Get recent appointments with patient info
     const { data: recentAppointments, error } = await supabase
         .from("appointments")
@@ -130,12 +149,12 @@ export async function getRecentActivity() {
         `)
         .eq("clinic_id", clinicId)
         .order("date", { ascending: false })
-        .limit(5)
+        .range(from, to)
 
     if (error) throw error
 
     // Transform data for activity feed
-    return recentAppointments.map(appointment => ({
+    const transformedData = recentAppointments.map(appointment => ({
         id: appointment.id,
         title: `حجز موعد - ${appointment.patient?.name || 'مريض'}`,
         time: new Date(appointment.date).toLocaleDateString('ar-EG', {
@@ -145,4 +164,9 @@ export async function getRecentActivity() {
         }),
         tag: appointment.status === 'pending' ? 'جديد' : null
     }))
+
+    return {
+        data: transformedData,
+        count: totalCount
+    }
 }

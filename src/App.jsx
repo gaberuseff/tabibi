@@ -6,6 +6,7 @@ import PermissionGuard from "./features/auth/PermissionGuard";
 import ProtectedRoute from "./features/auth/ProtectedRoute";
 import PublicRoute from "./features/auth/PublicRoute";
 import PatientDetailPage from "./features/patients/PatientDetailPage";
+import PatientPlanDetailPage from "./features/patients/PatientPlanDetailPage";
 import VisitDetailPage from "./features/patients/VisitDetailPage";
 import Booking from "./pages/Booking";
 import Landing from "./pages/Landing";
@@ -16,6 +17,7 @@ import Clinic from "./pages/doctor/Clinic";
 import Dashboard from "./pages/doctor/Dashboard";
 import Patients from "./pages/doctor/Patients";
 import Settings from "./pages/doctor/Settings";
+import TreatmentPlans from "./pages/doctor/TreatmentPlans";
 
 function App() {
   return (
@@ -87,10 +89,26 @@ function App() {
               } 
             />
             <Route 
+              path="/patients/:patientId/plans/:planId" 
+              element={
+                <PermissionGuard requiredPermission="patients">
+                  <PatientPlanDetailPage />
+                </PermissionGuard>
+              } 
+            />
+            <Route 
               path="/clinic" 
               element={
                 <PermissionGuard requiredPermission="clinic">
                   <Clinic />
+                </PermissionGuard>
+              } 
+            />
+            <Route 
+              path="/treatment-plans" 
+              element={
+                <PermissionGuard requiredPermission="patients">
+                  <TreatmentPlans />
                 </PermissionGuard>
               } 
             />

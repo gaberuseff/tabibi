@@ -1,11 +1,11 @@
+import { CalendarDays, Clock, Users, Wallet } from "lucide-react";
+import { useState } from "react";
 import { Card, CardContent } from "../../components/ui/card";
-import { CalendarDays, Users, Clock } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
+import { SkeletonLine } from "../../components/ui/skeleton";
 import { formatCurrency } from "../../lib/utils";
 import useDashboardStats from "./useDashboardStats";
 import useFilteredPatientStats from "./useFilteredPatientStats";
-import { SkeletonLine } from "../../components/ui/skeleton";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
-import { useState } from "react";
 
 function Stat({ icon: Icon, label, value, isLoading }) {
   return (
@@ -57,7 +57,7 @@ export default function SummaryCards() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
         <Stat
           icon={CalendarDays}
           label="مواعيد اليوم"
@@ -80,6 +80,12 @@ export default function SummaryCards() {
           icon={Clock}
           label="المواعيد المعلقة"
           value={stats?.pendingAppointments || 0}
+          isLoading={isLoading}
+        />
+        <Stat
+          icon={Wallet}
+          label="إجمالي الدخل"
+          value={stats?.totalIncome ? formatCurrency(stats.totalIncome) : "0.00 جنيه"}
           isLoading={isLoading}
         />
       </div>

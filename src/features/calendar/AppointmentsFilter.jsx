@@ -19,41 +19,41 @@ const statusOptions = [
 ]
 
 const timeOptions = [
-  { value: "upcoming", label: "القادمة" },
   { value: "all", label: "الجميع" },
+  { value: "upcoming", label: "القادمة" },
 ]
 
 export default function AppointmentsFilter({ onFilterChange }) {
   const [date, setDate] = useState("")
   const [status, setStatus] = useState("all")
-  const [time, setTime] = useState("upcoming")
+  const [time, setTime] = useState("all")
 
   const handleDateChange = (newDate) => {
     setDate(newDate)
     const statusValue = status === "all" ? "" : status
-    const timeValue = time === "upcoming" ? "upcoming" : "all"
+    const timeValue = time === "all" ? "" : time
     onFilterChange({ date: newDate, status: statusValue, time: timeValue })
   }
 
   const handleStatusChange = (newStatus) => {
     setStatus(newStatus)
     const statusValue = newStatus === "all" ? "" : newStatus
-    const timeValue = time === "upcoming" ? "upcoming" : "all"
+    const timeValue = time === "all" ? "" : time
     onFilterChange({ date, status: statusValue, time: timeValue })
   }
 
   const handleTimeChange = (newTime) => {
     setTime(newTime)
     const statusValue = status === "all" ? "" : status
-    const timeValue = newTime === "upcoming" ? "upcoming" : "all"
+    const timeValue = newTime === "all" ? "" : newTime
     onFilterChange({ date, status: statusValue, time: timeValue })
   }
 
   const handleClearFilters = () => {
     setDate("")
     setStatus("all")
-    setTime("upcoming")
-    onFilterChange({ date: "", status: "", time: "upcoming" })
+    setTime("all")
+    onFilterChange({ date: "", status: "", time: "" })
   }
 
   return (

@@ -1,8 +1,11 @@
-import { Card, CardContent, CardHeader } from "../../components/ui/card";
+import { useState } from "react";
+import { CalendarDays } from "lucide-react";
 import { Badge } from "../../components/ui/badge";
-import { CalendarDays, Stethoscope, Receipt } from "lucide-react";
-import useRecentActivity from "./useRecentActivity";
+import { Card, CardContent, CardHeader } from "../../components/ui/card";
 import { SkeletonLine } from "../../components/ui/skeleton";
+import Pagination from "../../components/ui/pagination";
+import useRecentActivity from "./useRecentActivity";
+import { ACTIVITY_PAGE_SIZE } from "../../constants/pagination";
 
 function Item({ icon: Icon, title, time, tag, isLoading }) {
   if (isLoading) {
@@ -37,7 +40,17 @@ function Item({ icon: Icon, title, time, tag, isLoading }) {
 }
 
 export default function Activity() {
-  const { data: activities, isLoading } = useRecentActivity();
+  const [page, setPage] = useState(1);
+  const { data: activities, isLoading } = useRecentActivity(page, ACTIVITY_PAGE_SIZE);
+
+  // Calculate total pages
+  const totalPages = activities && activities.count ? Math.ceil(activities.count / ACTIVITY_PAGE_SIZE) : 1;
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+    }
+  };
 
   return (
     <Card>
@@ -50,8 +63,8 @@ export default function Activity() {
             ? Array.from({ length: 3 }).map((_, i) => (
                 <Item key={i} isLoading={true} />
               ))
-            : activities && activities.length > 0
-            ? activities.map((activity) => (
+            : activities && activities.data && activities.data.length > 0
+            ? activities.data.map((activity) => (
                 <Item
                   key={activity.id}
                   icon={CalendarDays}
@@ -68,6 +81,15 @@ export default function Activity() {
                   time="الآن"
                 />
               ))}
+        </div>
+        
+        {/* Pagination */}
+        <div className="mt-6">
+          <Pagination 
+            currentPage={page} 
+            totalPages={totalPages} 
+            onPageChange={handlePageChange} 
+          />
         </div>
       </CardContent>
     </Card>

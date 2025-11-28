@@ -376,3 +376,157 @@ CREATE TRIGGER update_visits_updated_at
 BEFORE UPDATE ON visits
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
+
+-- Create treatment_templates table
+CREATE TABLE IF NOT EXISTS treatment_templates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  clinic_id BIGINT NOT NULL,
+  name TEXT NOT NULL,
+  session_count INTEGER NOT NULL,
+  session_price DECIMAL(10, 2) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create index on treatment_templates clinic_id
+CREATE INDEX IF NOT EXISTS idx_treatment_templates_clinic_id ON treatment_templates(clinic_id);
+
+-- Create index on treatment_templates name
+CREATE INDEX IF NOT EXISTS idx_treatment_templates_name ON treatment_templates(name);
+
+-- Treatment Templates RLS Policies
+ALTER TABLE treatment_templates ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Users can read treatment templates from their clinic
+CREATE POLICY "Users can read treatment templates from their clinic"
+ON treatment_templates
+FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM users u
+    WHERE u.id = auth.uid()
+    AND u.clinic_id = treatment_templates.clinic_id
+  )
+);
+
+-- Policy: Users can insert treatment templates to their clinic
+CREATE POLICY "Users can insert treatment templates to their clinic"
+ON treatment_templates
+FOR INSERT
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM users u
+    WHERE u.id = auth.uid()
+    AND u.clinic_id = treatment_templates.clinic_id
+  )
+);
+
+-- Policy: Users can update treatment templates from their clinic
+CREATE POLICY "Users can update treatment templates from their clinic"
+ON treatment_templates
+FOR UPDATE
+USING (
+  EXISTS (
+    SELECT 1 FROM users u
+    WHERE u.id = auth.uid()
+    AND u.clinic_id = treatment_templates.clinic_id
+  )
+);
+
+-- Policy: Users can delete treatment templates from their clinic
+CREATE POLICY "Users can delete treatment templates from their clinic"
+ON treatment_templates
+FOR DELETE
+USING (
+  EXISTS (
+    SELECT 1 FROM users u
+    WHERE u.id = auth.uid()
+    AND u.clinic_id = treatment_templates.clinic_id
+  )
+);
+
+-- Create trigger to automatically update updated_at
+CREATE TRIGGER update_treatment_templates_updated_at
+BEFORE UPDATE ON treatment_templates
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+-- Create patient_plans table
+CREATE TABLE IF NOT EXISTS patient_plans (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  clinic_id BIGINT NOT NULL,
+  patient_id UUID NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+  template_id UUID NOT NULL REFERENCES treatment_templates(id) ON DELETE CASCADE,
+  total_sessions INTEGER NOT NULL,
+  completed_sessions INTEGER NOT NULL DEFAULT 0,
+  total_price DECIMAL(10, 2) NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'completed', 'cancelled')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create index on patient_plans clinic_id
+CREATE INDEX IF NOT EXISTS idx_patient_plans_clinic_id ON patient_plans(clinic_id);
+
+-- Create index on patient_plans patient_id
+CREATE INDEX IF NOT EXISTS idx_patient_plans_patient_id ON patient_plans(patient_id);
+
+-- Create index on patient_plans template_id
+CREATE INDEX IF NOT EXISTS idx_patient_plans_template_id ON patient_plans(template_id);
+
+-- Patient Plans RLS Policies
+ALTER TABLE patient_plans ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Users can read patient plans from their clinic
+CREATE POLICY "Users can read patient plans from their clinic"
+ON patient_plans
+FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM users u
+    WHERE u.id = auth.uid()
+    AND u.clinic_id = patient_plans.clinic_id
+  )
+);
+
+-- Policy: Users can insert patient plans to their clinic
+CREATE POLICY "Users can insert patient plans to their clinic"
+ON patient_plans
+FOR INSERT
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM users u
+    WHERE u.id = auth.uid()
+    AND u.clinic_id = patient_plans.clinic_id
+  )
+);
+
+-- Policy: Users can update patient plans from their clinic
+CREATE POLICY "Users can update patient plans from their clinic"
+ON patient_plans
+FOR UPDATE
+USING (
+  EXISTS (
+    SELECT 1 FROM users u
+    WHERE u.id = auth.uid()
+    AND u.clinic_id = patient_plans.clinic_id
+  )
+);
+
+-- Policy: Users can delete patient plans from their clinic
+CREATE POLICY "Users can delete patient plans from their clinic"
+ON patient_plans
+FOR DELETE
+USING (
+  EXISTS (
+    SELECT 1 FROM users u
+    WHERE u.id = auth.uid()
+    AND u.clinic_id = patient_plans.clinic_id
+  )
+);
+
+-- Create trigger to automatically update updated_at
+CREATE TRIGGER update_patient_plans_updated_at
+BEFORE UPDATE ON patient_plans
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();

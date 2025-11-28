@@ -13,10 +13,12 @@ import {
   DialogFooter,
 } from "../../components/ui/dialog"
 import VisitCreateForm from "./VisitCreateForm"
+import { PATIENT_DETAIL_PAGE_SIZE } from "../../constants/pagination"
 
 export default function PatientVisitsTable({ visits, isLoading, patientId, onVisitAdded }) {
     const navigate = useNavigate()
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [currentPage, setCurrentPage] = useState(1)
 
     const handleVisitAdded = () => {
         // Refresh the visits list
@@ -73,6 +75,12 @@ export default function PatientVisitsTable({ visits, isLoading, patientId, onVis
         )
     }
 
+    // Pagination logic
+    const startIndex = (currentPage - 1) * PATIENT_DETAIL_PAGE_SIZE
+    const endIndex = startIndex + PATIENT_DETAIL_PAGE_SIZE
+    const paginatedVisits = visits?.slice(startIndex, endIndex) || []
+    const totalPages = Math.ceil((visits?.length || 0) / PATIENT_DETAIL_PAGE_SIZE)
+
     return (
         <Card>
             <CardHeader>
@@ -86,8 +94,12 @@ export default function PatientVisitsTable({ visits, isLoading, patientId, onVis
             <CardContent>
                 <DataTable
                     columns={columns}
-                    data={visits ?? []}
+                    data={paginatedVisits}
                     emptyLabel="لا توجد كشوفات"
+                    page={currentPage}
+                    pageSize={PATIENT_DETAIL_PAGE_SIZE}
+                    total={visits?.length || 0}
+                    onPageChange={setCurrentPage}
                 />
             </CardContent>
 

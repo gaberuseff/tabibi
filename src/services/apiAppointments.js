@@ -29,11 +29,12 @@ export async function getAppointments(search, page, pageSize, filters = {}) {
         .eq("clinic_id", userData.clinic_id)
         .range(from, to)
 
-    // Apply time filter - by default show only upcoming appointments
-    if (!filters.time || filters.time === "upcoming") {
+    // Apply time filter - by default show all appointments
+    if (filters.time === "upcoming") {
         const now = new Date().toISOString()
         query = query.gte('date', now)
     }
+    // If filters.time is "all" or not set, don't apply any time filter
 
     // Sort by appointment date ascending (closest first)
     query = query.order("date", { ascending: true })
@@ -243,10 +244,8 @@ export async function getAppointmentsByPatientId(patientId) {
     `)
         .eq("clinic_id", userData.clinic_id)
         .eq("patient_id", patientId)
-        // By default, show only upcoming appointments for patients
-        .gte('date', new Date().toISOString())
-        // Sort by appointment date ascending (closest first)
-        .order("date", { ascending: true })
+        // Show all appointments for the patient, sorted by date descending (newest first)
+        .order("date", { ascending: false })
 
     if (error) throw error
     return data ?? []

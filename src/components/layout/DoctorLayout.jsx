@@ -1,4 +1,4 @@
-import { CalendarDays, LayoutDashboard, Stethoscope, Users, Building, Settings, Menu } from "lucide-react"
+import { CalendarDays, LayoutDashboard, Stethoscope, Users, Building, Settings, Menu, FileText } from "lucide-react"
 import { NavLink, Outlet } from "react-router-dom"
 import { useAuth } from "../../features/auth/AuthContext"
 import ClinicInfo from "../../features/auth/ClinicInfo"
@@ -123,6 +123,13 @@ export default function DoctorLayout() {
             icon={Building} 
             label="العيادة" 
             isVisible={hasClinicAccess} 
+            onClick={handleNavItemClick}
+          />
+          <NavItem 
+            to="/treatment-plans" 
+            icon={FileText} 
+            label="خطط العلاج" 
+            isVisible={isDoctor} 
             onClick={handleNavItemClick}
           />
           <NavItem 
