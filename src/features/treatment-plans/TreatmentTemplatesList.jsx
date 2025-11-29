@@ -3,7 +3,7 @@ import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
-import { Calendar, Clock, DollarSign, Search, Edit } from "lucide-react";
+import { Calendar, DollarSign, Search, Edit } from "lucide-react";
 import useTreatmentTemplates from "./useTreatmentTemplates";
 import { SkeletonLine } from "../../components/ui/skeleton";
 import { Input } from "../../components/ui/input";
@@ -28,12 +28,6 @@ function TreatmentTemplateItem({ template }) {
         <CardContent>
           <div className="space-y-3">
             <div className="flex items-center text-sm">
-              <Clock className="ml-2 h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">عدد الجلسات:</span>
-              <span className="mr-2 font-medium">{template.session_count || 0} جلسة</span>
-            </div>
-            
-            <div className="flex items-center text-sm">
               <DollarSign className="ml-2 h-4 w-4 text-muted-foreground" />
               <span className="text-muted-foreground">سعر الجلسة:</span>
               <span className="mr-2 font-medium">{formatCurrency(template.session_price || 0)}</span>
@@ -47,13 +41,15 @@ function TreatmentTemplateItem({ template }) {
               </span>
             </div>
             
-            <div className="pt-2 flex justify-between items-center">
-              <div className="text-sm">
-                <span className="text-muted-foreground">الإجمالي:</span>
-                <span className="mr-1 font-bold text-primary">
-                  {template.session_count && template.session_price ? formatCurrency(template.session_count * template.session_price) : formatCurrency(0)}
-                </span>
+            {template.description && (
+              <div className="pt-2">
+                <p className="text-sm text-muted-foreground line-clamp-2">
+                  {template.description}
+                </p>
               </div>
+            )}
+            
+            <div className="pt-2 flex justify-end">
               <Button variant="outline" size="sm" onClick={() => setIsEditDialogOpen(true)}>
                 <Edit className="h-4 w-4 ml-1" />
                 تعديل

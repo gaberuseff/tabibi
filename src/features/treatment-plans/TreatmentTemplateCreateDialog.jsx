@@ -28,8 +28,8 @@ export default function TreatmentTemplateCreateDialog({ open, onClose, onTemplat
     try {
       const payload = {
         name: values.name,
-        session_count: parseInt(values.session_count),
         session_price: parseFloat(values.session_price),
+        description: values.description || null,
       };
       
       const newTemplate = await mutateAsync(payload);

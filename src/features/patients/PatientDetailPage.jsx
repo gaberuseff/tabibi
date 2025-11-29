@@ -25,7 +25,7 @@ import DataTable from "../../components/ui/table";
 // Treatment Plans Table Component
 function PatientTreatmentPlansTable({ patientId }) {
   const { data: templates, isLoading: isTemplatesLoading } = useTreatmentTemplates();
-  const { data: patientPlans, isLoading: isPlansLoading } = usePatientPlans(patientId);
+  const { data: patientPlans, isLoading: isPlansLoading, refetch } = usePatientPlans(patientId);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -40,6 +40,7 @@ function PatientTreatmentPlansTable({ patientId }) {
 
   const handlePlanAssigned = () => {
     // Refresh patient plans
+    refetch();
   };
 
   // Define columns for the patient plans table
@@ -120,13 +121,15 @@ function PatientTreatmentPlansTable({ patientId }) {
                     >
                       <div className="font-medium">{template.name}</div>
                       <div className="text-xs text-muted-foreground">
-                        {template.session_count} جلسات - {template.session_price} جنيه للجلسة
+                        {template.session_price} جنيه للجلسة
                       </div>
                     </DropdownMenuItem>
                   ))
                 ) : (
                   <DropdownMenuItem disabled>
-                    لا توجد خطط علاجية متوفرة
+                    <div className="text-center w-full text-sm text-muted-foreground">
+                      لا توجد خطط علاجية متوفرة
+                    </div>
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
@@ -281,26 +284,26 @@ export default function PatientDetailPage() {
               <CardContent>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="rounded-[var(--radius)] border border-border p-3">
-                    <div className="text-sm text-muted-foreground">phone</div>
+                    <div className="text-sm text-muted-foreground">رقم الهاتف</div>
                     <div className="text-base">{patient?.phone ?? "-"}</div>
                   </div>
                   <div className="rounded-[var(--radius)] border border-border p-3">
-                    <div className="text-sm text-muted-foreground">gender</div>
+                    <div className="text-sm text-muted-foreground">الجنس</div>
                     <div className="text-base">{patient?.gender}</div>
                   </div>
                   <div className="rounded-[var(--radius)] border border-border p-3">
-                    <div className="text-sm text-muted-foreground">address</div>
+                    <div className="text-sm text-muted-foreground">العنوان</div>
                     <div className="text-base">{patient?.address ?? "-"}</div>
                   </div>
                   <div className="rounded-[var(--radius)] border border-border p-3">
                     <div className="text-sm text-muted-foreground">
-                      date_of_birth
+                      تاريخ الميلاد
                     </div>
                     <div className="text-base">{patient?.date_of_birth ?? "-"}</div>
                   </div>
                   <div className="rounded-[var(--radius)] border border-border p-3">
                     <div className="text-sm text-muted-foreground">
-                      blood_type
+                      فصيلة الدم
                     </div>
                     <div className="text-base">{patient?.blood_type ?? "-"}</div>
                   </div>

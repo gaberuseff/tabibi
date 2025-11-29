@@ -74,6 +74,12 @@ export default function PatientPlanDetailPage() {
 
   // Function to cancel the plan
   const handleCancelPlan = () => {
+    // Check if all sessions are completed
+    if (completedSessions >= (plan?.total_sessions || 0)) {
+      toast.error("لا يمكن إلغاء الخطة بعد إكمال جميع الجلسات");
+      return;
+    }
+    
     updatePlan(
       { id: planId, payload: { status: 'cancelled' } },
       {
@@ -215,10 +221,6 @@ export default function PatientPlanDetailPage() {
                     <span>{plan?.total_sessions || 0} جلسة</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">عدد الجلسات المتاحة:</span>
-                    <span>{plan?.treatment_templates?.session_count || 0} جلسة</span>
-                  </div>
-                  <div className="flex justify-between">
                     <span className="text-muted-foreground">سعر الجلسة:</span>
                     <span>{formatCurrency(plan?.treatment_templates?.session_price || 0)}</span>
                   </div>
@@ -305,9 +307,13 @@ export default function PatientPlanDetailPage() {
               <Button 
                 variant="destructive" 
                 onClick={handleCancelPlan}
-                disabled={isPlanCancelled}
+                disabled={isPlanCancelled || completedSessions >= (plan?.total_sessions || 0)}
               >
-                {isPlanCancelled ? "الخطة ملغية" : "إلغاء الخطة"}
+                {isPlanCancelled 
+                  ? "الخطة ملغية" 
+                  : completedSessions >= (plan?.total_sessions || 0)
+                    ? "اكتملت جميع الجلسات"
+                    : "إلغاء الخطة"}
               </Button>
             </div>
           </div>

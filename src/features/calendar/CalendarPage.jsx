@@ -1,26 +1,36 @@
 import { CalendarPlus, Search } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "../../components/ui/button"
 import { Card, CardContent } from "../../components/ui/card"
 import { Input } from "../../components/ui/input"
 import TableSkeleton from "../../components/ui/table-skeleton"
 import { APPOINTMENTS_PAGE_SIZE } from "../../constants/pagination"
 import AppointmentCreateDialog from "./AppointmentCreateDialog"
+import AppointmentsFilter from "./AppointmentsFilter"
 import AppointmentsTable from "./AppointmentsTable"
 import useAppointments from "./useAppointments"
-import AppointmentsFilter from "./AppointmentsFilter"
 
 export default function CalendarPage() {
   const [query, setQuery] = useState("")
   const [page, setPage] = useState(1)
   const [filters, setFilters] = useState({})
   const [open, setOpen] = useState(false)
-  const { data, isLoading } = useAppointments(query, page, APPOINTMENTS_PAGE_SIZE, filters)
+  const { data, isLoading, refetch } = useAppointments(query, page, APPOINTMENTS_PAGE_SIZE, filters)
 
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters)
     setPage(1) // Reset to first page when filters change
   }
+
+  // Auto-refresh appointments every 10 minutes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetch()
+    }, 10 * 60 * 1000) // 10 minutes in milliseconds
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(interval)
+  }, [refetch])
 
   return (
     <div className="space-y-8" dir="rtl">

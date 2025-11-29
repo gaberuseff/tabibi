@@ -1,8 +1,9 @@
-import { Navigate } from "react-router-dom"
+import { Navigate, useLocation } from "react-router-dom"
 import useUser from "./useUser"
 
 export default function PermissionGuard({ children, requiredPermission }) {
   const { data: user, isLoading } = useUser()
+  const location = useLocation()
 
   if (isLoading) {
     return (
@@ -27,6 +28,11 @@ export default function PermissionGuard({ children, requiredPermission }) {
 
   // For secretaries, check permissions
   if (user.role === "secretary") {
+    // Settings page is always accessible for secretaries as it's their profile page
+    if (location.pathname === "/settings") {
+      return children
+    }
+
     // If permissions array is empty or null, deny access
     if (!user.permissions || user.permissions.length === 0) {
       return (

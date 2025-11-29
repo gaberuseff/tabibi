@@ -12,12 +12,13 @@ import {
 import { Input } from "../../components/ui/input"
 import { Label } from "../../components/ui/label"
 import { Textarea } from "../../components/ui/textarea"
+import SimpleDatePicker from "../../components/ui/simple-date-picker"
 import PatientCreateDialog from "../patients/PatientCreateDialog"
 import useCreateAppointment from "./useCreateAppointment"
 import useSearchPatients from "./useSearchPatients"
 
 export default function AppointmentCreateDialog({ open, onClose }) {
-  const { register, handleSubmit, formState: { errors }, reset } = useForm()
+  const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm()
   const { mutate: createAppointment, isPending } = useCreateAppointment()
   const [patientSearch, setPatientSearch] = useState("")
   const [selectedPatient, setSelectedPatient] = useState(null)
@@ -162,9 +163,15 @@ export default function AppointmentCreateDialog({ open, onClose }) {
             {/* Date and Time */}
             <div className="space-y-2">
               <Label htmlFor="date">التاريخ والوقت *</Label>
-              <Input
-                id="date"
-                type="datetime-local"
+              <SimpleDatePicker
+                onDateChange={(dateTime) => {
+                  // Update the form value manually
+                  setValue("date", dateTime, { shouldValidate: true })
+                }}
+                error={errors.date?.message}
+              />
+              <input
+                type="hidden"
                 {...register("date", { 
                   required: "التاريخ والوقت مطلوب",
                   validate: (value) => {

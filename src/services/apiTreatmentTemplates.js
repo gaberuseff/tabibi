@@ -75,7 +75,7 @@ export async function getTreatmentTemplates() {
 
     const { data, error } = await supabase
         .from("treatment_templates")
-        .select("id, name, session_count, session_price, created_at")
+        .select("id, name, session_price, description, created_at")
         .eq("clinic_id", userData.clinic_id)
         .order("created_at", { ascending: false });
 

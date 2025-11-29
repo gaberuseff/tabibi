@@ -22,6 +22,11 @@ const statusMap = {
   cancelled: { label: "ملغي", variant: "destructive" },
 }
 
+const sourceMap = {
+  booking: { label: "من الموقع", variant: "default" },
+  clinic: { label: "من العيادة", variant: "secondary" },
+}
+
 export default function AppointmentsTable({ appointments, total, page, pageSize, onPageChange }) {
   const queryClient = useQueryClient()
   
@@ -73,6 +78,15 @@ export default function AppointmentsTable({ appointments, total, page, pageSize,
       accessor: "price",
       cellClassName: "text-muted-foreground",
       render: (appointment) => appointment.price ? appointment.price.toFixed(2) : "0.00"
+    },
+    {
+      header: "المصدر",
+      accessor: "from",
+      render: (appointment) => (
+        <Badge variant={sourceMap[appointment.from]?.variant || "secondary"}>
+          {sourceMap[appointment.from]?.label || appointment.from}
+        </Badge>
+      ),
     },
     {
       header: "الحالة",

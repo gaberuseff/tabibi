@@ -34,7 +34,8 @@ export default function DoctorLayout() {
   const hasCalendarAccess = isDoctor || (user?.permissions && user.permissions.includes("calendar"))
   const hasPatientsAccess = isDoctor || (user?.permissions && user.permissions.includes("patients"))
   const hasClinicAccess = isDoctor || (user?.permissions && user.permissions.includes("clinic"))
-  const hasSettingsAccess = isDoctor || (user?.permissions && user.permissions.includes("settings"))
+  // Settings page is always accessible for secretaries as it's their profile page
+  const hasSettingsAccess = isDoctor || (user?.permissions && user.permissions.includes("settings")) || user?.role === "secretary"
   
   // Function to close sidebar on mobile after clicking a nav item
   const handleNavItemClick = () => {

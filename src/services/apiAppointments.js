@@ -24,6 +24,7 @@ export async function getAppointments(search, page, pageSize, filters = {}) {
       notes,
       price,
       status,
+      from,
       patient:patients(id, name, phone)
     `, { count: "exact" })
         .eq("clinic_id", userData.clinic_id)
@@ -57,6 +58,11 @@ export async function getAppointments(search, page, pageSize, filters = {}) {
         query = query.eq('status', filters.status)
     }
 
+    // Apply source filter if provided
+    if (filters.source) {
+        query = query.eq('from', filters.source)
+    }
+
     const { data, error, count } = await query
 
     if (error) throw error
@@ -68,14 +74,15 @@ export async function createAppointmentPublic(payload, clinicId) {
     console.log("Creating appointment with clinicId:", clinicId);
     console.log("Clinic ID type:", typeof clinicId);
 
-    // Convert clinicId to BigInt for database operations
-    const clinicIdBigInt = BigInt(clinicId);
+    // Convert clinicId to string for JSON serialization
+    const clinicIdString = clinicId.toString();
 
     // Add clinic_id to the appointment data
     const appointmentData = {
         ...payload,
-        clinic_id: clinicIdBigInt,
-        status: "pending"
+        clinic_id: clinicIdString,
+        status: "pending",
+        from: "booking" // Indicate that this appointment was created from the booking page
     }
 
     console.log("Appointment data to insert:", appointmentData);
@@ -110,7 +117,8 @@ export async function createAppointment(payload) {
     const appointmentData = {
         ...payload,
         clinic_id: userData.clinic_id,
-        status: "pending"
+        status: "pending",
+        from: "clinic" // Indicate that this appointment was created from the clinic (by staff)
     }
 
     const { data, error } = await supabase
@@ -200,7 +208,7 @@ export async function searchPatientsPublic(searchTerm, clinicId) {
     console.log("Searching patients with clinicId:", clinicId);
     console.log("Clinic ID type:", typeof clinicId);
 
-    // Convert clinicId to BigInt for database operations
+    // Convert clinicId to BigInt for database operations, then back to string for comparison
     const clinicIdBigInt = BigInt(clinicId);
 
     // Only search by phone number for public booking
@@ -208,7 +216,7 @@ export async function searchPatientsPublic(searchTerm, clinicId) {
     const { data, error } = await supabase
         .from("patients")
         .select("id, name, phone")
-        .eq("clinic_id", clinicIdBigInt)
+        .eq("clinic_id", clinicIdBigInt.toString())
         .ilike("phone", s)
         .limit(5)
 

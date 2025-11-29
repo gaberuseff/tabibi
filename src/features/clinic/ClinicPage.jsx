@@ -14,13 +14,13 @@ import useClinicSecretaries from "../auth/useClinicSecretaries"
 import useUpdateSecretaryPermissions from "../auth/useUpdateSecretaryPermissions"
 import useUpdateClinic from "../settings/useUpdateClinic"
 
-// Define available permissions/routes
+// Define available permissions/routes (settings is always available for secretaries)
 const AVAILABLE_PERMISSIONS = [
     { id: "dashboard", label: "لوحة التحكم" },
     { id: "calendar", label: "المواعيد" },
     { id: "patients", label: "المرضى" },
     { id: "clinic", label: "العيادة" },
-    { id: "settings", label: "الإعدادات" },
+    // Note: settings is always available for secretaries as it's their profile page
 ]
 
 function SecretarySkeleton() {
@@ -37,14 +37,27 @@ function SecretarySkeleton() {
 
 function SecretaryItem({ secretary, onUpdatePermissions }) {
     const [isOpen, setIsOpen] = useState(false)
-    const [selectedPermissions, setSelectedPermissions] = useState(secretary.permissions || [])
+    // Initialize with default permissions if none exist
+    const [selectedPermissions, setSelectedPermissions] = useState(() => {
+        // Ensure we're working with an array
+        const permissions = Array.isArray(secretary.permissions) ? secretary.permissions : [];
+        
+        if (permissions.length > 0) {
+            return permissions;
+        }
+        // Default permissions for new secretaries
+        return ["dashboard", "calendar", "patients"];
+    })
 
     const handlePermissionChange = (permissionId) => {
         setSelectedPermissions(prev => {
-            if (prev.includes(permissionId)) {
-                return prev.filter(p => p !== permissionId)
+            // Ensure prev is an array
+            const currentPermissions = Array.isArray(prev) ? prev : [];
+            
+            if (currentPermissions.includes(permissionId)) {
+                return currentPermissions.filter(p => p !== permissionId);
             } else {
-                return [...prev, permissionId]
+                return [...currentPermissions, permissionId];
             }
         })
     }
@@ -87,6 +100,11 @@ function SecretaryItem({ secretary, onUpdatePermissions }) {
                                         </label>
                                     </div>
                                 ))}
+                            </div>
+                            <div className="mt-4 p-3 bg-muted rounded-lg">
+                                <p className="text-sm text-muted-foreground">
+                                    ملاحظة: صفحة الإعدادات متاحة دائماً للسكرتير كونها تحتوي على معلومات حسابه الشخصي
+                                </p>
                             </div>
                         </div>
                         <div className="flex justify-end gap-2 pt-4">

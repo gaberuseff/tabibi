@@ -26,8 +26,8 @@ export default function TreatmentTemplateEditDialog({ open, onClose, template })
   React.useEffect(() => {
     if (template && open) {
       setValue("name", template.name);
-      setValue("session_count", template.session_count);
       setValue("session_price", template.session_price);
+      setValue("description", template.description || "");
     }
   }, [template, open, setValue]);
 
@@ -44,8 +44,8 @@ export default function TreatmentTemplateEditDialog({ open, onClose, template })
       
       const payload = {
         name: values.name,
-        session_count: parseInt(values.session_count),
         session_price: parseFloat(values.session_price),
+        description: values.description || null,
       };
       
       await mutateAsync({ id: template.id, payload });

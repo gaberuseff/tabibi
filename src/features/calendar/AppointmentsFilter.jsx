@@ -23,37 +23,56 @@ const timeOptions = [
   { value: "upcoming", label: "القادمة" },
 ]
 
+const sourceOptions = [
+  { value: "all", label: "جميع المصادر" },
+  { value: "booking", label: "من الموقع" },
+  { value: "clinic", label: "من العيادة" },
+]
+
 export default function AppointmentsFilter({ onFilterChange }) {
   const [date, setDate] = useState("")
   const [status, setStatus] = useState("all")
   const [time, setTime] = useState("all")
+  const [source, setSource] = useState("all")
 
   const handleDateChange = (newDate) => {
     setDate(newDate)
     const statusValue = status === "all" ? "" : status
     const timeValue = time === "all" ? "" : time
-    onFilterChange({ date: newDate, status: statusValue, time: timeValue })
+    const sourceValue = source === "all" ? "" : source
+    onFilterChange({ date: newDate, status: statusValue, time: timeValue, source: sourceValue })
   }
 
   const handleStatusChange = (newStatus) => {
     setStatus(newStatus)
     const statusValue = newStatus === "all" ? "" : newStatus
     const timeValue = time === "all" ? "" : time
-    onFilterChange({ date, status: statusValue, time: timeValue })
+    const sourceValue = source === "all" ? "" : source
+    onFilterChange({ date, status: statusValue, time: timeValue, source: sourceValue })
   }
 
   const handleTimeChange = (newTime) => {
     setTime(newTime)
     const statusValue = status === "all" ? "" : status
     const timeValue = newTime === "all" ? "" : newTime
-    onFilterChange({ date, status: statusValue, time: timeValue })
+    const sourceValue = source === "all" ? "" : source
+    onFilterChange({ date, status: statusValue, time: timeValue, source: sourceValue })
+  }
+
+  const handleSourceChange = (newSource) => {
+    setSource(newSource)
+    const statusValue = status === "all" ? "" : status
+    const timeValue = time === "all" ? "" : time
+    const sourceValue = newSource === "all" ? "" : newSource
+    onFilterChange({ date, status: statusValue, time: timeValue, source: sourceValue })
   }
 
   const handleClearFilters = () => {
     setDate("")
     setStatus("all")
     setTime("all")
-    onFilterChange({ date: "", status: "", time: "" })
+    setSource("all")
+    onFilterChange({ date: "", status: "", time: "", source: "" })
   }
 
   return (
@@ -93,6 +112,22 @@ export default function AppointmentsFilter({ onFilterChange }) {
             </SelectTrigger>
             <SelectContent>
               {timeOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium">المصدر</label>
+          <Select value={source} onValueChange={handleSourceChange}>
+            <SelectTrigger className="w-full sm:w-40">
+              <SelectValue placeholder="اختر المصدر" />
+            </SelectTrigger>
+            <SelectContent>
+              {sourceOptions.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>

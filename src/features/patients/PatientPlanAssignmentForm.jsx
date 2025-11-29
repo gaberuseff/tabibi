@@ -1,8 +1,5 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
-import * as z from "zod";
 import { Button } from "../../components/ui/button";
 import {
     Dialog,
@@ -15,12 +12,6 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { useCreatePatientPlan } from "./usePatientPlans";
 
-const formSchema = z.object({
-  total_sessions: z.number().min(1, "عدد الجلسات يجب أن يكون أكبر من صفر"),
-  template_id: z.string(),
-  patient_id: z.string(),
-});
-
 export default function PatientPlanAssignmentForm({ 
   open, 
   onClose, 
@@ -28,120 +19,109 @@ export default function PatientPlanAssignmentForm({
   patientId,
   onPlanAssigned 
 }) {
+  const [totalSessions, setTotalSessions] = useState(1);
   const [totalPrice, setTotalPrice] = useState(0);
   const [sessionError, setSessionError] = useState("");
   const { mutate: createPlan, isPending: isCreating } = useCreatePatientPlan();
-  
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    reset,
-    formState: { errors },
-  } = useForm({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      total_sessions: 1,
-      template_id: template?.id || "",
-      patient_id: patientId || "",
-    },
-  });
 
-  const watchedSessions = watch("total_sessions");
-
-  // Calculate total price when sessions change
+  // Calculate total price when sessions or template changes
   useEffect(() => {
-    if (template && watchedSessions) {
-      const calculatedPrice = watchedSessions * (template.session_price || 0);
-      setTotalPrice(calculatedPrice);
+    // Handle empty or invalid session count
+    if (template && totalSessions !== "" && !isNaN(parseInt(totalSessions))) {
+      const sessions = parseInt(totalSessions);
+      if (sessions > 0) {
+        const calculatedPrice = sessions * (template.session_price || 0);
+        setTotalPrice(calculatedPrice);
+        return;
+      }
     }
-  }, [watchedSessions, template]);
+    setTotalPrice(0);
+  }, [totalSessions, template]);
 
-  // Reset form when dialog opens
+  // Reset form when dialog opens or template changes
   useEffect(() => {
     if (open) {
-      reset({
-        total_sessions: 1,
-        template_id: template?.id || "",
-        patient_id: patientId || "",
-      });
+      setTotalSessions(1);
+      setSessionError("");
       if (template) {
         setTotalPrice(template.session_price || 0);
+      } else {
+        setTotalPrice(0);
       }
-      // Clear errors when opening form
-      setSessionError("");
     }
-  }, [open, template, patientId, reset]);
+  }, [open, template]);
 
-  const onSubmit = (data) => {
-    console.log("onSubmit called with data:", data);
+  const handleSessionCountChange = (e) => {
+    const value = e.target.value;
     
-    // Clear previous errors
-    setSessionError("");
-    
-    // Validate that total sessions don't exceed template session count
-    if (data.total_sessions > template.session_count) {
-      setSessionError(`عدد الجلسات لا يمكن أن يتجاوز ${template.session_count}`);
+    // Allow empty value during typing
+    if (value === "") {
+      setTotalSessions("");
+      setSessionError("");
       return;
     }
     
+    const numValue = parseInt(value);
+    
+    // Check if it's a valid number
+    if (isNaN(numValue)) {
+      setSessionError("يرجى إدخال رقم صحيح");
+      return;
+    }
+    
+    // Update the value
+    setTotalSessions(numValue);
+    
     // Validate minimum sessions
-    if (data.total_sessions < 1) {
+    if (numValue < 1) {
+      setSessionError("عدد الجلسات يجب أن يكون أكبر من صفر");
+    } else {
+      setSessionError("");
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Validate minimum sessions
+    const sessions = parseInt(totalSessions);
+    if (isNaN(sessions) || sessions < 1) {
       setSessionError("عدد الجلسات يجب أن يكون أكبر من صفر");
       return;
     }
-
-    // Calculate total price
-    const totalPrice = data.total_sessions * (template.session_price || 0);
-
-    const planData = {
-      total_sessions: data.total_sessions,
-      template_id: data.template_id || template?.id || "",
-      patient_id: data.patient_id || patientId || "",
-      total_price: totalPrice,
-      status: "active"
-    };
-
-    console.log("Sending plan data:", planData);
     
-    // Call the mutation directly
-    console.log("Calling createPlan with:", planData);
-    createPlan(planData, {
-      onSuccess: (result) => {
-        console.log("Plan creation successful:", result);
-        toast.success("تم إنشاء الخطة العلاجية بنجاح");
+    if (!template?.id || !patientId) {
+      toast.error("بيانات غير كاملة");
+      return;
+    }
+    
+    const payload = {
+      total_sessions: sessions,
+      total_price: parseFloat(totalPrice),
+      template_id: template.id,
+      patient_id: patientId,
+      status: "active" // Set default status to active
+    };
+    
+    console.log("Submitting patient plan:", payload);
+    
+    createPlan(payload, {
+      onSuccess: () => {
+        toast.success("تم تعيين خطة العلاج بنجاح");
+        if (onPlanAssigned) {
+          onPlanAssigned();
+        }
         onClose();
-        if (onPlanAssigned) onPlanAssigned();
       },
       onError: (error) => {
-        console.log("Plan creation failed:", error);
-        toast.error("حدث خطأ أثناء إنشاء الخطة العلاجية");
-        console.error("Error creating plan:", error);
-      },
+        console.error("Error creating patient plan:", error);
+        toast.error("حدث خطأ أثناء تعيين خطة العلاج");
+      }
     });
   };
 
-  const handleFormSubmit = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log("Form submit handler called");
-    
-    // Get form data manually since react-hook-form might not be working
-    const formData = new FormData(e.target);
-    const data = {
-      total_sessions: parseInt(formData.get('total_sessions')) || 1,
-      template_id: template?.id || "",
-      patient_id: patientId || "",
-    };
-    
-    console.log("Manual form data:", data);
-    onSubmit(data);
-  };
-  
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
-      console.log("Dialog open state changed:", isOpen);
       if (!isOpen) {
         onClose();
       }
@@ -151,10 +131,7 @@ export default function PatientPlanAssignmentForm({
           <DialogTitle>تعيين خطة علاجية</DialogTitle>
         </DialogHeader>
         
-        <form 
-          onSubmit={handleFormSubmit}
-          className="space-y-4"
-        >
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="template-name" className="text-right">
@@ -165,19 +142,7 @@ export default function PatientPlanAssignmentForm({
                   id="template-name"
                   value={template?.name || ""}
                   disabled
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="session-count" className="text-right">
-                عدد الجلسات المتاحة
-              </Label>
-              <div className="col-span-3">
-                <Input
-                  id="session-count"
-                  value={template?.session_count || 0}
-                  disabled
+                  className="bg-muted/50" // Highlight as non-editable
                 />
               </div>
             </div>
@@ -191,6 +156,7 @@ export default function PatientPlanAssignmentForm({
                   id="session-price"
                   value={`${template?.session_price || 0} جنيه`}
                   disabled
+                  className="bg-muted/50" // Highlight as non-editable
                 />
               </div>
             </div>
@@ -202,16 +168,15 @@ export default function PatientPlanAssignmentForm({
               <div className="col-span-3">
                 <Input
                   id="total_sessions"
-                  name="total_sessions"
                   type="number"
                   min="1"
-                  max={template?.session_count || 1}
-                  defaultValue="1"
-                  className={errors.total_sessions || sessionError ? "border-red-500" : ""}
+                  value={totalSessions}
+                  onChange={handleSessionCountChange}
+                  className={sessionError ? "border-red-500" : ""}
                 />
-                {(errors.total_sessions || sessionError) && (
+                {sessionError && (
                   <p className="text-red-500 text-sm mt-1">
-                    {errors.total_sessions?.message || sessionError}
+                    {sessionError}
                   </p>
                 )}
               </div>
@@ -224,11 +189,25 @@ export default function PatientPlanAssignmentForm({
               <div className="col-span-3">
                 <Input
                   id="total-price"
-                  value={`${totalPrice} جنيه`}
+                  value={`${typeof totalPrice === 'number' ? totalPrice.toFixed(2) : '0.00'} جنيه`}
                   disabled
+                  className="bg-muted/50" // Highlight as non-editable
                 />
               </div>
             </div>
+            
+            {template?.description && (
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="template-description" className="text-right pt-2">
+                  الوصف
+                </Label>
+                <div className="col-span-3">
+                  <div className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
+                    {template.description}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
           
           <DialogFooter>
@@ -237,7 +216,7 @@ export default function PatientPlanAssignmentForm({
             </Button>
             <Button 
               type="submit" 
-              disabled={isCreating}
+              disabled={isCreating || !!sessionError}
             >
               {isCreating ? "جارٍ الإنشاء..." : "إنشاء خطة"}
             </Button>

@@ -65,9 +65,21 @@ CREATE TABLE IF NOT EXISTS appointments (
   notes TEXT NOT NULL,
   price DECIMAL(10, 2) DEFAULT 0.00,
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'completed', 'cancelled')),
+  "from" TEXT NOT NULL DEFAULT 'clinic' CHECK ("from" IN ('booking', 'clinic')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Add "from" column to existing appointments table if it doesn't exist
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'appointments' AND column_name = 'from'
+  ) THEN
+    ALTER TABLE appointments ADD COLUMN "from" TEXT NOT NULL DEFAULT 'clinic' CHECK ("from" IN ('booking', 'clinic'));
+  END IF;
+END $$;
 
 -- Create index on appointments clinic_id
 CREATE INDEX IF NOT EXISTS idx_appointments_clinic_id ON appointments(clinic_id);
@@ -77,6 +89,9 @@ CREATE INDEX IF NOT EXISTS idx_appointments_patient_id ON appointments(patient_i
 
 -- Create index on appointments date
 CREATE INDEX IF NOT EXISTS idx_appointments_date ON appointments(date);
+
+-- Create index on appointments "from" column
+CREATE INDEX IF NOT EXISTS idx_appointments_from ON appointments("from");
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
@@ -382,8 +397,8 @@ CREATE TABLE IF NOT EXISTS treatment_templates (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   clinic_id BIGINT NOT NULL,
   name TEXT NOT NULL,
-  session_count INTEGER NOT NULL,
   session_price DECIMAL(10, 2) NOT NULL,
+  description TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

@@ -18,23 +18,6 @@ export default function TreatmentTemplateForm({ register, errors }) {
       </div>
 
       <div>
-        <Label htmlFor="session_count">عدد الجلسات</Label>
-        <Input
-          id="session_count"
-          type="number"
-          min="1"
-          {...register("session_count", { 
-            required: "عدد الجلسات مطلوب",
-            min: { value: 1, message: "يجب أن يكون عدد الجلسات أكبر من 0" }
-          })}
-          placeholder="أدخل عدد الجلسات"
-        />
-        {errors.session_count && (
-          <p className="text-sm text-red-500 mt-1">{errors.session_count.message}</p>
-        )}
-      </div>
-
-      <div>
         <Label htmlFor="session_price">سعر الجلسة الواحدة</Label>
         <Input
           id="session_price"
@@ -50,6 +33,16 @@ export default function TreatmentTemplateForm({ register, errors }) {
         {errors.session_price && (
           <p className="text-sm text-red-500 mt-1">{errors.session_price.message}</p>
         )}
+      </div>
+
+      <div>
+        <Label htmlFor="description">وصف الخطة (اختياري)</Label>
+        <Textarea
+          id="description"
+          {...register("description")}
+          placeholder="أدخل وصف الخطة العلاجية"
+          className="min-h-[100px]"
+        />
       </div>
     </div>
   );
