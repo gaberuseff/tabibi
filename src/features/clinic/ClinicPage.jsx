@@ -160,7 +160,6 @@ export default function ClinicPage() {
     useEffect(() => {
         if (clinic) {
             // Initialize available_time with default structure if not present
-            const initializedAvailableTime = {};
             const defaultTimeStructure = {
                 saturday: { start: "", end: "", off: false },
                 sunday: { start: "", end: "", off: false },
@@ -171,6 +170,9 @@ export default function ClinicPage() {
                 friday: { start: "", end: "", off: false }
             };
             
+            // Create a new object for initializedAvailableTime
+            const initializedAvailableTime = {};
+            
             if (clinic.available_time) {
                 // Merge existing data with default structure to ensure all days are present
                 Object.keys(defaultTimeStructure).forEach(day => {
@@ -180,7 +182,10 @@ export default function ClinicPage() {
                     };
                 });
             } else {
-                initializedAvailableTime = defaultTimeStructure;
+                // If no available_time data, use the default structure
+                Object.keys(defaultTimeStructure).forEach(day => {
+                    initializedAvailableTime[day] = { ...defaultTimeStructure[day] };
+                });
             }
             
             setClinicFormData({
