@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS clinics (
   name TEXT NOT NULL,
   address TEXT NOT NULL,
   booking_price DECIMAL(10, 2) DEFAULT 0.00,
+  available_time JSONB,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

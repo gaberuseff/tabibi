@@ -28,17 +28,21 @@ export async function getAppointments(search, page, pageSize, filters = {}) {
       patient:patients(id, name, phone)
     `, { count: "exact" })
         .eq("clinic_id", userData.clinic_id)
-        .range(from, to)
 
-    // Apply time filter - by default show all appointments
+    // Apply time filter
     if (filters.time === "upcoming") {
         const now = new Date().toISOString()
         query = query.gte('date', now)
-    }
-    // If filters.time is "all" or not set, don't apply any time filter
 
-    // Sort by appointment date ascending (closest first)
-    query = query.order("date", { ascending: true })
+        query = query.order("status", { ascending: false })
+            .order("date", { ascending: true })
+    } else {
+        // For all appointments, sort by date descending (newest first)
+        query = query.order("date", { ascending: false })
+    }
+
+    // Apply range for pagination
+    query = query.range(from, to)
 
     // Apply date filter if provided
     if (filters.date) {
@@ -63,17 +67,19 @@ export async function getAppointments(search, page, pageSize, filters = {}) {
         query = query.eq('from', filters.source)
     }
 
+    // Apply search term if provided
+    if (search) {
+        const s = `%${search.trim()}%`
+        query = query.or(`patient.name.ilike.${s},patient.phone.ilike.${s}`)
+    }
+
     const { data, error, count } = await query
 
     if (error) throw error
     return { items: data ?? [], total: count ?? 0 }
 }
 
-// New function to create appointment for public booking (no authentication required)
 export async function createAppointmentPublic(payload, clinicId) {
-    console.log("Creating appointment with clinicId:", clinicId);
-    console.log("Clinic ID type:", typeof clinicId);
-
     // Convert clinicId to string for JSON serialization
     const clinicIdString = clinicId.toString();
 
@@ -84,8 +90,6 @@ export async function createAppointmentPublic(payload, clinicId) {
         status: "pending",
         from: "booking" // Indicate that this appointment was created from the booking page
     }
-
-    console.log("Appointment data to insert:", appointmentData);
 
     const { data, error } = await supabase
         .from("appointments")
@@ -205,9 +209,6 @@ export async function searchPatients(searchTerm) {
 
 // New function for public booking - search patients by phone only
 export async function searchPatientsPublic(searchTerm, clinicId) {
-    console.log("Searching patients with clinicId:", clinicId);
-    console.log("Clinic ID type:", typeof clinicId);
-
     // Convert clinicId to BigInt for database operations, then back to string for comparison
     const clinicIdBigInt = BigInt(clinicId);
 

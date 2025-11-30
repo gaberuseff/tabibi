@@ -23,6 +23,19 @@ const AVAILABLE_PERMISSIONS = [
     // Note: settings is always available for secretaries as it's their profile page
 ]
 
+const getDayName = (day) => {
+    const days = {
+        saturday: "السبت",
+        sunday: "الأحد",
+        monday: "الاثنين",
+        tuesday: "الثلاثاء",
+        wednesday: "الأربعاء",
+        thursday: "الخميس",
+        friday: "الجمعة"
+    };
+    return days[day] || day;
+};
+
 function SecretarySkeleton() {
     return (
         <div className="flex items-center justify-between p-4 border border-border rounded-lg">
@@ -132,15 +145,49 @@ export default function ClinicPage() {
     const [clinicFormData, setClinicFormData] = useState({
         name: "",
         address: "",
-        booking_price: ""
+        booking_price: "",
+        available_time: {
+            saturday: { start: "", end: "", off: false },
+            sunday: { start: "", end: "", off: false },
+            monday: { start: "", end: "", off: false },
+            tuesday: { start: "", end: "", off: false },
+            wednesday: { start: "", end: "", off: false },
+            thursday: { start: "", end: "", off: false },
+            friday: { start: "", end: "", off: false }
+        }
     });
 
     useEffect(() => {
         if (clinic) {
+            // Initialize available_time with default structure if not present
+            const initializedAvailableTime = {};
+            const defaultTimeStructure = {
+                saturday: { start: "", end: "", off: false },
+                sunday: { start: "", end: "", off: false },
+                monday: { start: "", end: "", off: false },
+                tuesday: { start: "", end: "", off: false },
+                wednesday: { start: "", end: "", off: false },
+                thursday: { start: "", end: "", off: false },
+                friday: { start: "", end: "", off: false }
+            };
+            
+            if (clinic.available_time) {
+                // Merge existing data with default structure to ensure all days are present
+                Object.keys(defaultTimeStructure).forEach(day => {
+                    initializedAvailableTime[day] = {
+                        ...defaultTimeStructure[day],
+                        ...(clinic.available_time[day] || {})
+                    };
+                });
+            } else {
+                initializedAvailableTime = defaultTimeStructure;
+            }
+            
             setClinicFormData({
                 name: clinic.name || "",
                 address: clinic.address || "",
-                booking_price: clinic.booking_price || ""
+                booking_price: clinic.booking_price || "",
+                available_time: initializedAvailableTime
             });
         }
     }, [clinic]);
@@ -154,6 +201,32 @@ export default function ClinicPage() {
         setClinicFormData(prev => ({
             ...prev,
             [name]: value
+        }));
+    };
+    
+    const handleTimeChange = (day, field, value) => {
+        setClinicFormData(prev => ({
+            ...prev,
+            available_time: {
+                ...prev.available_time,
+                [day]: {
+                    ...prev.available_time[day],
+                    [field]: value
+                }
+            }
+        }));
+    };
+    
+    const toggleDayOff = (day) => {
+        setClinicFormData(prev => ({
+            ...prev,
+            available_time: {
+                ...prev.available_time,
+                [day]: {
+                    ...prev.available_time[day],
+                    off: !prev.available_time[day].off
+                }
+            }
         }));
     };
     
@@ -222,6 +295,63 @@ export default function ClinicPage() {
                                     <p className="text-xs text-muted-foreground">
                                         سعر الحجز الذي سيظهر لمرضى العيادة عند الحجز
                                     </p>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>أوقات العمل</Label>
+                                    <p className="text-xs text-muted-foreground">
+                                        حدد أوقات العمل اليومية للعيادة
+                                    </p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                                        {Object.entries(clinicFormData.available_time).map(([day, times]) => (
+                                            <div key={day} className="border rounded-lg p-3 bg-muted/30 hover:bg-muted/50 transition-colors">
+                                                <div className="flex justify-between items-center mb-3">
+                                                    <h4 className="font-medium capitalize text-sm">
+                                                        {getDayName(day)}
+                                                    </h4>
+                                                    <Button
+                                                        type="button"
+                                                        variant={times.off ? "default" : "outline"}
+                                                        size="sm"
+                                                        onClick={() => toggleDayOff(day)}
+                                                        className={`h-8 px-3 text-xs ${
+                                                            times.off 
+                                                                ? "bg-red-500 hover:bg-red-600" 
+                                                                : "border-gray-300 hover:bg-gray-100"
+                                                        }`}
+                                                    >
+                                                        {times.off ? "إجازة" : "عمل"}
+                                                    </Button>
+                                                </div>
+                                                {!times.off && (
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="flex-1 min-w-0">
+                                                            <Label htmlFor={`${day}-start`} className="text-xs text-muted-foreground">من</Label>
+                                                            <Input
+                                                                id={`${day}-start`}
+                                                                type="time"
+                                                                value={times.start}
+                                                                onChange={(e) => handleTimeChange(day, 'start', e.target.value)}
+                                                                className="h-9 text-sm px-2 py-1"
+                                                            />
+                                                        </div>
+                                                        <div className="flex items-center justify-center h-9">
+                                                            <span className="text-muted-foreground text-sm">-</span>
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <Label htmlFor={`${day}-end`} className="text-xs text-muted-foreground">إلى</Label>
+                                                            <Input
+                                                                id={`${day}-end`}
+                                                                type="time"
+                                                                value={times.end}
+                                                                onChange={(e) => handleTimeChange(day, 'end', e.target.value)}
+                                                                className="h-9 text-sm px-2 py-1"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
                                     <Label>رابط الحجز</Label>

@@ -1,19 +1,19 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { ar } from "date-fns/locale"
-import { Badge } from "../../components/ui/badge"
-import { Card, CardContent } from "../../components/ui/card"
-import DataTable from "../../components/ui/table"
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "../../components/ui/dropdown-menu"
-import { Button } from "../../components/ui/button"
-import { MoreHorizontal } from "lucide-react"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { updateAppointment } from "../../services/apiAppointments"
+import { Bell, MoreHorizontal } from "lucide-react"
 import toast from "react-hot-toast"
+import { Badge } from "../../components/ui/badge"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent } from "../../components/ui/card"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "../../components/ui/dropdown-menu"
+import DataTable from "../../components/ui/table"
+import { updateAppointment } from "../../services/apiAppointments"
 
 const statusMap = {
   pending: { label: "قيد الانتظار", variant: "secondary" },
@@ -26,6 +26,46 @@ const sourceMap = {
   booking: { label: "من الموقع", variant: "default" },
   clinic: { label: "من العيادة", variant: "secondary" },
 }
+
+// Check if appointment is within 2 hours
+const isWithinTwoHours = (appointmentDate) => {
+  if (!appointmentDate) return false;
+  
+  const now = new Date();
+  const appointmentTime = new Date(appointmentDate);
+  const timeDifference = appointmentTime.getTime() - now.getTime();
+  const hoursDifference = timeDifference / (1000 * 60 * 60);
+  
+  return hoursDifference > 0 && hoursDifference <= 2;
+};
+
+// Generate WhatsApp reminder message
+const generateReminderMessage = (patientName, appointmentDate) => {
+  const formattedDate = format(new Date(appointmentDate), "dd/MM/yyyy", { locale: ar });
+  const formattedTime = format(new Date(appointmentDate), "hh:mm a", { locale: ar });
+  
+  return `مرحباً ${patientName}، هذا تذكير بموعدك في العيادة بتاريخ ${formattedDate} الساعة ${formattedTime}. نرجو الحضور قبل الموعد بـ15 دقيقة.`;
+};
+
+// Format phone number for WhatsApp (remove all non-digit characters and ensure it starts with country code)
+const formatPhoneNumberForWhatsApp = (phone) => {
+  if (!phone) return "";
+  
+  // Remove all non-digit characters
+  let formattedPhone = phone.replace(/\D/g, "");
+  
+  // If the phone number starts with "0", replace it with the country code (assuming Egypt with +20)
+  if (formattedPhone.startsWith("0")) {
+    formattedPhone = "20" + formattedPhone.substring(1);
+  }
+  
+  // If the phone number doesn't start with "+", add it
+  if (!formattedPhone.startsWith("20")) {
+    formattedPhone = "20" + formattedPhone;
+  }
+  
+  return formattedPhone;
+};
 
 export default function AppointmentsTable({ appointments, total, page, pageSize, onPageChange }) {
   const queryClient = useQueryClient()
@@ -47,6 +87,22 @@ export default function AppointmentsTable({ appointments, total, page, pageSize,
   const handleStatusChange = (appointmentId, newStatus) => {
     updateStatus({ id: appointmentId, status: newStatus })
   }
+  
+  const handleSendReminder = (patientPhone, patientName, appointmentDate) => {
+    // Format the phone number for WhatsApp
+    const formattedPhone = formatPhoneNumberForWhatsApp(patientPhone);
+    
+    // If phone number is invalid, show an error
+    if (!formattedPhone) {
+      toast.error("رقم الهاتف غير صحيح");
+      return;
+    }
+    
+    const message = generateReminderMessage(patientName, appointmentDate);
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank');
+  };
 
   const columns = [
     {
@@ -100,32 +156,49 @@ export default function AppointmentsTable({ appointments, total, page, pageSize,
     {
       header: "",
       render: (appointment) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <MoreHorizontal className="h-4 w-4" />
+        <div className="flex items-center gap-1">
+          {isWithinTwoHours(appointment.date) && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={() => handleSendReminder(
+                appointment.patient?.phone, 
+                appointment.patient?.name, 
+                appointment.date
+              )}
+              title="إرسال تذكير عبر الواتساب"
+            >
+              <Bell className="h-4 w-4" />
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent 
-            align="end" 
-            sideOffset={5}
-            collisionPadding={10}
-            avoidCollisions
-          >
-            <DropdownMenuItem onClick={() => handleStatusChange(appointment.id, "pending")}>
-              تغيير إلى قيد الانتظار
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleStatusChange(appointment.id, "confirmed")}>
-              تغيير إلى مؤكد
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleStatusChange(appointment.id, "completed")}>
-              تغيير إلى مكتمل
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleStatusChange(appointment.id, "cancelled")}>
-              تغيير إلى ملغي
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent 
+              align="end" 
+              sideOffset={5}
+              collisionPadding={10}
+              avoidCollisions
+            >
+              <DropdownMenuItem onClick={() => handleStatusChange(appointment.id, "pending")}>
+                تغيير إلى قيد الانتظار
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleStatusChange(appointment.id, "confirmed")}>
+                تغيير إلى مؤكد
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleStatusChange(appointment.id, "completed")}>
+                تغيير إلى مكتمل
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleStatusChange(appointment.id, "cancelled")}>
+                تغيير إلى ملغي
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       ),
     },
   ]

@@ -1,7 +1,7 @@
 import { CalendarPlus, Search } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Button } from "../../components/ui/button"
-import { Card, CardContent } from "../../components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
 import { Input } from "../../components/ui/input"
 import TableSkeleton from "../../components/ui/table-skeleton"
 import { APPOINTMENTS_PAGE_SIZE } from "../../constants/pagination"
@@ -13,24 +13,33 @@ import useAppointments from "./useAppointments"
 export default function CalendarPage() {
   const [query, setQuery] = useState("")
   const [page, setPage] = useState(1)
+  const [allAppointmentsPage, setAllAppointmentsPage] = useState(1)
   const [filters, setFilters] = useState({})
   const [open, setOpen] = useState(false)
-  const { data, isLoading, refetch } = useAppointments(query, page, APPOINTMENTS_PAGE_SIZE, filters)
+  
+  // Fetch upcoming appointments (closest to current time, confirmed first)
+  const upcomingFilters = { ...filters, time: "upcoming" }
+  const { data: upcomingData, isLoading: isUpcomingLoading, refetch: refetchUpcoming } = useAppointments(query, page, APPOINTMENTS_PAGE_SIZE, upcomingFilters)
+  
+  // Fetch all appointments
+  const { data: allData, isLoading: isAllLoading, refetch: refetchAll } = useAppointments(query, allAppointmentsPage, APPOINTMENTS_PAGE_SIZE, filters)
 
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters)
     setPage(1) // Reset to first page when filters change
+    setAllAppointmentsPage(1)
   }
 
   // Auto-refresh appointments every 10 minutes
   useEffect(() => {
     const interval = setInterval(() => {
-      refetch()
+      refetchUpcoming()
+      refetchAll()
     }, 10 * 60 * 1000) // 10 minutes in milliseconds
 
     // Cleanup interval on component unmount
     return () => clearInterval(interval)
-  }, [refetch])
+  }, [refetchUpcoming, refetchAll])
 
   return (
     <div className="space-y-8" dir="rtl">
@@ -50,6 +59,7 @@ export default function CalendarPage() {
               onChange={(e) => {
                 setQuery(e.target.value)
                 setPage(1)
+                setAllAppointmentsPage(1)
               }}
             />
           </div>
@@ -62,21 +72,51 @@ export default function CalendarPage() {
 
       <AppointmentsFilter onFilterChange={handleFilterChange} />
 
-      {isLoading ? (
+      {/* Upcoming Appointments Section */}
+      <div className="space-y-4">
         <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">المواعيد القادمة</CardTitle>
+            <p className="text-sm text-muted-foreground">الحجوزات المؤكدة والأقرب إلى الوقت الحالي</p>
+          </CardHeader>
           <CardContent className="p-0">
-            <TableSkeleton columns={5} rows={APPOINTMENTS_PAGE_SIZE} />
+            {isUpcomingLoading ? (
+              <TableSkeleton columns={5} rows={APPOINTMENTS_PAGE_SIZE} />
+            ) : (
+              <AppointmentsTable
+                appointments={upcomingData?.items}
+                total={upcomingData?.total}
+                page={page}
+                pageSize={APPOINTMENTS_PAGE_SIZE}
+                onPageChange={setPage}
+              />
+            )}
           </CardContent>
         </Card>
-      ) : (
-        <AppointmentsTable
-          appointments={data?.items}
-          total={data?.total}
-          page={page}
-          pageSize={APPOINTMENTS_PAGE_SIZE}
-          onPageChange={setPage}
-        />
-      )}
+      </div>
+
+      {/* All Appointments Section */}
+      <div className="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">جميع المواعيد</CardTitle>
+            <p className="text-sm text-muted-foreground">جميع المواعيد مرتبة حسب التاريخ في قاعدة البيانات</p>
+          </CardHeader>
+          <CardContent className="p-0">
+            {isAllLoading ? (
+              <TableSkeleton columns={5} rows={APPOINTMENTS_PAGE_SIZE} />
+            ) : (
+              <AppointmentsTable
+                appointments={allData?.items}
+                total={allData?.total}
+                page={allAppointmentsPage}
+                pageSize={APPOINTMENTS_PAGE_SIZE}
+                onPageChange={setAllAppointmentsPage}
+              />
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       <AppointmentCreateDialog open={open} onClose={() => setOpen(false)} />
     </div>

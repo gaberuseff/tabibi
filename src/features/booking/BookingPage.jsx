@@ -96,6 +96,7 @@ export default function BookingPage() {
   const [selectedPatient, setSelectedPatient] = useState(null)
   const [isBookingComplete, setIsBookingComplete] = useState(false)
   const [currentStep, setCurrentStep] = useState(1) // 1 for patient form, 2 for appointment form
+  const [selectedDate, setSelectedDate] = useState(null) // Track selected date for validation
   
   // Watch the date field for validation
   const appointmentDate = watch("date")
@@ -146,6 +147,13 @@ export default function BookingPage() {
       return
     }
     
+    // Validate working hours and holidays
+    const validationError = validateWorkingHours(data.date, clinic?.available_time)
+    if (validationError) {
+      toast.error(validationError)
+      return
+    }
+    
     createAppointment(
       {
         payload: {
@@ -167,6 +175,97 @@ export default function BookingPage() {
         }
       }
     )
+  }
+  
+  // Validate if the selected date/time is within working hours and not a holiday
+  const validateWorkingHours = (dateTimeString, availableTime) => {
+    if (!availableTime) return null
+    
+    const date = new Date(dateTimeString)
+    const dayOfWeek = getDayOfWeekArabic(date.getDay()) // Get Arabic day name
+    const timeString = formatTime24(date) // Get time in HH:MM format
+    
+    // Check if the day exists in available_time data
+    const dayData = availableTime[getDayKey(date.getDay())]
+    
+    // If day data doesn't exist, assume it's a working day with default hours
+    if (!dayData) return null
+    
+    // Check if it's a holiday/off day
+    if (dayData.off) {
+      return `هذا اليوم (${dayOfWeek}) إجازة، لا يمكن الحجز في هذا اليوم`
+    }
+    
+    // Check if start and end times are set
+    if (!dayData.start || !dayData.end) {
+      return `أوقات العمل لهذا اليوم (${dayOfWeek}) غير محددة`
+    }
+    
+    // Check if the selected time is within working hours
+    if (timeString < dayData.start || timeString > dayData.end) {
+      return `الوقت المحدد خارج أوقات العمل. أوقات العمل لهذا اليوم (${dayOfWeek}): من ${formatTime12(dayData.start)} إلى ${formatTime12(dayData.end)}`
+    }
+    
+    return null // No validation error
+  }
+  
+  // Check if the form is valid for submission
+  const isFormValid = () => {
+    if (!appointmentDate) return false;
+    
+    const validationError = validateWorkingHours(appointmentDate, clinic?.available_time);
+    return !validationError;
+  }
+  
+  // Helper function to format time as 12-hour format with AM/PM
+  const formatTime12 = (time24) => {
+    if (!time24) return "";
+    
+    const [hours, minutes] = time24.split(":");
+    let hour = parseInt(hours);
+    const minute = minutes;
+    
+    const period = hour >= 12 ? "مساءً" : "صباحًا";
+    hour = hour % 12 || 12;
+    
+    return `${hour}:${minute} ${period}`;
+  }
+  
+  // Helper function to get Arabic day name from day index (0-6, where 0 is Sunday)
+  const getDayOfWeekArabic = (dayIndex) => {
+    const days = {
+      0: "الأحد",
+      1: "الاثنين",
+      2: "الثلاثاء",
+      3: "الأربعاء",
+      4: "الخميس",
+      5: "الجمعة",
+      6: "السبت"
+    }
+    return days[dayIndex] || ""
+  }
+  
+  // Helper function to get day key for available_time object (saturday, sunday, etc.)
+  const getDayKey = (dayIndex) => {
+    // JavaScript's getDay() returns: 0: Sunday, 1: Monday, ..., 6: Saturday
+    // Our data structure keys are named after the days themselves
+    const dayMap = {
+      0: "sunday",
+      1: "monday",
+      2: "tuesday",
+      3: "wednesday",
+      4: "thursday",
+      5: "friday",
+      6: "saturday"
+    }
+    return dayMap[dayIndex] || ""
+  }
+  
+  // Helper function to format time as HH:MM from a Date object
+  const formatTime24 = (date) => {
+    const hours = date.getHours().toString().padStart(2, '0')
+    const minutes = date.getMinutes().toString().padStart(2, '0')
+    return `${hours}:${minutes}`
   }
   
   // Reset form and start over
@@ -328,11 +427,17 @@ export default function BookingPage() {
                 <div className="space-y-2">
                   <Label htmlFor="date" className="text-sm">التاريخ والوقت *</Label>
                   <SimpleDatePicker
-                    onDateChange={(dateTime) => {
+                    onDateChange={(dateTime, dateOnly) => {
                       // Update the form value manually
                       setValue("date", dateTime, { shouldValidate: true })
+                      // Also update the selected date for validation
+                      if (dateOnly) {
+                        setSelectedDate(dateOnly)
+                      }
                     }}
                     error={errors.date?.message}
+                    availableTime={clinic?.available_time}
+                    selectedDay={appointmentDate}
                   />
                   <input
                     type="hidden"
@@ -342,6 +447,13 @@ export default function BookingPage() {
                         if (!value || isNaN(new Date(value).getTime())) {
                           return "تاريخ ووقت الموعد غير صحيح"
                         }
+                        
+                        // Validate working hours and holidays
+                        const validationError = validateWorkingHours(value, clinic?.available_time)
+                        if (validationError) {
+                          return validationError
+                        }
+                        
                         return true
                       }
                     })}
@@ -393,7 +505,7 @@ export default function BookingPage() {
                   <Button 
                     type="submit" 
                     className="flex-1"
-                    disabled={isCreatingAppointment}
+                    disabled={isCreatingAppointment || !isFormValid()}
                   >
                     {isCreatingAppointment ? "جاري الحجز..." : "حجز الموعد"}
                   </Button>
