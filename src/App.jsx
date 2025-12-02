@@ -2,7 +2,6 @@ import {memo} from "react";
 import {Toaster} from "react-hot-toast";
 import {BrowserRouter, Route, Routes} from "react-router-dom";
 import DoctorLayout from "./components/layout/DoctorLayout";
-import SEO from "./components/SEO";
 import {AuthProvider} from "./features/auth/AuthContext";
 import PermissionGuard from "./features/auth/PermissionGuard";
 import ProtectedRoute from "./features/auth/ProtectedRoute";
@@ -41,39 +40,12 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          <Route
-            path="/"
-            element={
-              <>
-                <SEO
-                  title="Tabibi - نظام إدارة العيادات الطبية"
-                  description="نظام إلكتروني شامل لإدارة العيادات الطبية، يتضمن جدولة المواعيد، السجلات الطبية، وإدارة المرضى."
-                  keywords="عيادة طبية, إدارة عيادة, جدولة مواعيد, سجلات طبية, نظام طبي"
-                  ogTitle="Tabibi - نظام إدارة العيادات الطبية"
-                  ogDescription="نظام إلكتروني شامل لإدارة العيادات الطبية، يتضمن جدولة المواعيد، السجلات الطبية، وإدارة المرضى."
-                  ogUrl="https://tabibi.eg/"
-                  twitterCard="summary_large_image"
-                  twitterTitle="Tabibi - نظام إدارة العيادات الطبية"
-                  twitterDescription="نظام إلكتروني شامل لإدارة العيادات الطبية، يتضمن جدولة المواعيد، السجلات الطبية، وإدارة المرضى."
-                />
-                <MemoizedLanding />
-              </>
-            }
-          />
+          <Route path="/" element={<MemoizedLanding />} />
           <Route
             path="/login"
             element={
               <PublicRoute>
-                <>
-                  <SEO
-                    title="تسجيل الدخول - Tabibi"
-                    description="تسجيل الدخول إلى حسابك في Tabibi لإدارة عيادتك الطبية."
-                    ogTitle="تسجيل الدخول - Tabibi"
-                    ogDescription="تسجيل الدخول إلى حسابك في Tabibi لإدارة عيادتك الطبية."
-                    ogUrl="https://tabibi.eg/login"
-                  />
-                  <MemoizedLogin />
-                </>
+                <MemoizedLogin />
               </PublicRoute>
             }
           />
@@ -81,16 +53,7 @@ function App() {
             path="/signup"
             element={
               <PublicRoute>
-                <>
-                  <SEO
-                    title="إنشاء حساب - Tabibi"
-                    description="أنشئ حسابك المجاني في Tabibi لإدارة عيادتك الطبية بسهولة وكفاءة."
-                    ogTitle="إنشاء حساب - Tabibi"
-                    ogDescription="أنشئ حسابك المجاني في Tabibi لإدارة عيادتك الطبية بسهولة وكفاءة."
-                    ogUrl="https://tabibi.eg/signup"
-                  />
-                  <MemoizedSignup />
-                </>
+                <MemoizedSignup />
               </PublicRoute>
             }
           />
@@ -173,21 +136,7 @@ function App() {
               }
             />
           </Route>
-          <Route
-            path="/booking/:clinicId"
-            element={
-              <>
-                <SEO
-                  title="حجز موعد - Tabibi"
-                  description="احجز موعدك الإلكتروني مع الطبيب بسهولة وسرعة."
-                  ogTitle="حجز موعد - Tabibi"
-                  ogDescription="احجز موعدك الإلكتروني مع الطبيب بسهولة وسرعة."
-                  ogUrl="https://tabibi.eg/booking"
-                />
-                <MemoizedBooking />
-              </>
-            }
-          />
+          <Route path="/booking/:clinicId" element={<MemoizedBooking />} />
         </Routes>
         <Toaster position="top-center" />
       </AuthProvider>

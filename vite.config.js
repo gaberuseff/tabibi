@@ -31,11 +31,5 @@ export default defineConfig({
   // Optimize dependencies pre-bundling
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query']
-  },
-  // SEO optimizations
-  define: {
-    // Define global constants for SEO
-    __APP_NAME__: JSON.stringify('Tabibi'),
-    __APP_DESCRIPTION__: JSON.stringify('نظام إلكتروني شامل لإدارة العيادات الطبية'),
   }
 })
