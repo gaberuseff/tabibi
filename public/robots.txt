@@ -1,0 +1,14 @@
+User-agent: *
+Disallow: /dashboard/
+Disallow: /calendar/
+Disallow: /patients/
+Disallow: /clinic/
+Disallow: /treatment-plans/
+Disallow: /settings/
+Disallow: /login
+Disallow: /signup
+
+Allow: /
+Allow: /booking/
+
+Sitemap: https://tabibi.eg/sitemap.xml

@@ -1,8 +1,9 @@
-import { memo } from "react";
-import { Toaster } from "react-hot-toast";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import {memo} from "react";
+import {Toaster} from "react-hot-toast";
+import {BrowserRouter, Route, Routes} from "react-router-dom";
 import DoctorLayout from "./components/layout/DoctorLayout";
-import { AuthProvider } from "./features/auth/AuthContext";
+import SEO from "./components/SEO";
+import {AuthProvider} from "./features/auth/AuthContext";
 import PermissionGuard from "./features/auth/PermissionGuard";
 import ProtectedRoute from "./features/auth/ProtectedRoute";
 import PublicRoute from "./features/auth/PublicRoute";
@@ -40,12 +41,39 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          <Route path="/" element={<MemoizedLanding />} />
+          <Route
+            path="/"
+            element={
+              <>
+                <SEO
+                  title="Tabibi - نظام إدارة العيادات الطبية"
+                  description="نظام إلكتروني شامل لإدارة العيادات الطبية، يتضمن جدولة المواعيد، السجلات الطبية، وإدارة المرضى."
+                  keywords="عيادة طبية, إدارة عيادة, جدولة مواعيد, سجلات طبية, نظام طبي"
+                  ogTitle="Tabibi - نظام إدارة العيادات الطبية"
+                  ogDescription="نظام إلكتروني شامل لإدارة العيادات الطبية، يتضمن جدولة المواعيد، السجلات الطبية، وإدارة المرضى."
+                  ogUrl="https://tabibi.eg/"
+                  twitterCard="summary_large_image"
+                  twitterTitle="Tabibi - نظام إدارة العيادات الطبية"
+                  twitterDescription="نظام إلكتروني شامل لإدارة العيادات الطبية، يتضمن جدولة المواعيد، السجلات الطبية، وإدارة المرضى."
+                />
+                <MemoizedLanding />
+              </>
+            }
+          />
           <Route
             path="/login"
             element={
               <PublicRoute>
-                <MemoizedLogin />
+                <>
+                  <SEO
+                    title="تسجيل الدخول - Tabibi"
+                    description="تسجيل الدخول إلى حسابك في Tabibi لإدارة عيادتك الطبية."
+                    ogTitle="تسجيل الدخول - Tabibi"
+                    ogDescription="تسجيل الدخول إلى حسابك في Tabibi لإدارة عيادتك الطبية."
+                    ogUrl="https://tabibi.eg/login"
+                  />
+                  <MemoizedLogin />
+                </>
               </PublicRoute>
             }
           />
@@ -53,7 +81,16 @@ function App() {
             path="/signup"
             element={
               <PublicRoute>
-                <MemoizedSignup />
+                <>
+                  <SEO
+                    title="إنشاء حساب - Tabibi"
+                    description="أنشئ حسابك المجاني في Tabibi لإدارة عيادتك الطبية بسهولة وكفاءة."
+                    ogTitle="إنشاء حساب - Tabibi"
+                    ogDescription="أنشئ حسابك المجاني في Tabibi لإدارة عيادتك الطبية بسهولة وكفاءة."
+                    ogUrl="https://tabibi.eg/signup"
+                  />
+                  <MemoizedSignup />
+                </>
               </PublicRoute>
             }
           />
@@ -62,82 +99,95 @@ function App() {
               <ProtectedRoute>
                 <DoctorLayout />
               </ProtectedRoute>
-            }
-          >
-            <Route 
-              path="/dashboard" 
+            }>
+            <Route
+              path="/dashboard"
               element={
                 <PermissionGuard requiredPermission="dashboard">
                   <MemoizedDashboard />
                 </PermissionGuard>
-              } 
+              }
             />
-            <Route 
-              path="/calendar" 
+            <Route
+              path="/calendar"
               element={
                 <PermissionGuard requiredPermission="calendar">
                   <MemoizedCalendar />
                 </PermissionGuard>
-              } 
+              }
             />
-            <Route 
-              path="/patients" 
+            <Route
+              path="/patients"
               element={
                 <PermissionGuard requiredPermission="patients">
                   <MemoizedPatients />
                 </PermissionGuard>
-              } 
+              }
             />
-            <Route 
-              path="/patients/:id" 
+            <Route
+              path="/patients/:id"
               element={
                 <PermissionGuard requiredPermission="patients">
                   <MemoizedPatientDetailPage />
                 </PermissionGuard>
-              } 
+              }
             />
-            <Route 
-              path="/patients/:patientId/visits/:visitId" 
+            <Route
+              path="/patients/:patientId/visits/:visitId"
               element={
                 <PermissionGuard requiredPermission="patients">
                   <MemoizedVisitDetailPage />
                 </PermissionGuard>
-              } 
+              }
             />
-            <Route 
-              path="/patients/:patientId/plans/:planId" 
+            <Route
+              path="/patients/:patientId/plans/:planId"
               element={
                 <PermissionGuard requiredPermission="patients">
                   <MemoizedPatientPlanDetailPage />
                 </PermissionGuard>
-              } 
+              }
             />
-            <Route 
-              path="/clinic" 
+            <Route
+              path="/clinic"
               element={
                 <PermissionGuard requiredPermission="clinic">
                   <MemoizedClinic />
                 </PermissionGuard>
-              } 
+              }
             />
-            <Route 
-              path="/treatment-plans" 
+            <Route
+              path="/treatment-plans"
               element={
                 <PermissionGuard requiredPermission="patients">
                   <MemoizedTreatmentPlans />
                 </PermissionGuard>
-              } 
+              }
             />
-            <Route 
-              path="/settings" 
+            <Route
+              path="/settings"
               element={
                 <PermissionGuard requiredPermission="settings">
                   <MemoizedSettings />
                 </PermissionGuard>
-              } 
+              }
             />
           </Route>
-          <Route path="/booking/:clinicId" element={<MemoizedBooking />} />
+          <Route
+            path="/booking/:clinicId"
+            element={
+              <>
+                <SEO
+                  title="حجز موعد - Tabibi"
+                  description="احجز موعدك الإلكتروني مع الطبيب بسهولة وسرعة."
+                  ogTitle="حجز موعد - Tabibi"
+                  ogDescription="احجز موعدك الإلكتروني مع الطبيب بسهولة وسرعة."
+                  ogUrl="https://tabibi.eg/booking"
+                />
+                <MemoizedBooking />
+              </>
+            }
+          />
         </Routes>
         <Toaster position="top-center" />
       </AuthProvider>

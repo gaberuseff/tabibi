@@ -1,4 +1,4 @@
-import { Stethoscope } from "lucide-react"
+import { Stethoscope } from "lucide-react";
 
 export default function Footer() {
   return (
@@ -8,9 +8,12 @@ export default function Footer() {
           <Stethoscope className="size-5 text-primary" />
           <span className="font-semibold">Tabibi</span>
         </div>
-        <span className="text-sm text-muted-foreground">© جميع الحقوق محفوظة</span>
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          <span className="text-sm text-muted-foreground">
+            © جميع الحقوق محفوظة
+          </span>
+        </div>
       </div>
     </footer>
-  )
+  );
 }
-
