@@ -1,130 +1,143 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { format } from "date-fns"
-import { ar } from "date-fns/locale"
-import { Bell, MoreHorizontal } from "lucide-react"
-import toast from "react-hot-toast"
-import { Badge } from "../../components/ui/badge"
-import { Button } from "../../components/ui/button"
-import { Card, CardContent } from "../../components/ui/card"
+import {useMutation, useQueryClient} from "@tanstack/react-query";
+import {format} from "date-fns";
+import {ar} from "date-fns/locale";
+import {Bell, Eye, MoreHorizontal} from "lucide-react";
+import toast from "react-hot-toast";
+import {Badge} from "../../components/ui/badge";
+import {Button} from "../../components/ui/button";
+import {Card, CardContent} from "../../components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
-} from "../../components/ui/dropdown-menu"
-import DataTable from "../../components/ui/table"
-import { updateAppointment } from "../../services/apiAppointments"
+  DropdownMenuTrigger,
+} from "../../components/ui/dropdown-menu";
+import DataTable from "../../components/ui/table";
+import {updateAppointment} from "../../services/apiAppointments";
 // Added import for usePlan hook and Dialog components
-import usePlan from "../auth/usePlan"
+import usePlan from "../auth/usePlan";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter
-} from "../../components/ui/dialog"
-import { useState } from "react"
+  DialogFooter,
+} from "../../components/ui/dialog";
+import {useState} from "react";
+import {useNavigate} from "react-router-dom";
 
 const statusMap = {
-  pending: { label: "قيد الانتظار", variant: "secondary" },
-  confirmed: { label: "مؤكد", variant: "default" },
-  completed: { label: "مكتمل", variant: "outline" },
-  cancelled: { label: "ملغي", variant: "destructive" },
-}
+  pending: {label: "قيد الانتظار", variant: "secondary"},
+  confirmed: {label: "مؤكد", variant: "default"},
+  completed: {label: "مكتمل", variant: "outline"},
+  cancelled: {label: "ملغي", variant: "destructive"},
+};
 
 const sourceMap = {
-  booking: { label: "من الموقع", variant: "default" },
-  clinic: { label: "من العيادة", variant: "secondary" },
-}
+  booking: {label: "من الموقع", variant: "default"},
+  clinic: {label: "من العيادة", variant: "secondary"},
+};
 
 // Check if appointment is within 2 hours
 const isWithinTwoHours = (appointmentDate) => {
   if (!appointmentDate) return false;
-  
+
   const now = new Date();
   const appointmentTime = new Date(appointmentDate);
   const timeDifference = appointmentTime.getTime() - now.getTime();
   const hoursDifference = timeDifference / (1000 * 60 * 60);
-  
+
   return hoursDifference > 0 && hoursDifference <= 2;
 };
 
 // Generate WhatsApp reminder message
 const generateReminderMessage = (patientName, appointmentDate) => {
-  const formattedDate = format(new Date(appointmentDate), "dd/MM/yyyy", { locale: ar });
-  const formattedTime = format(new Date(appointmentDate), "hh:mm a", { locale: ar });
-  
+  const formattedDate = format(new Date(appointmentDate), "dd/MM/yyyy", {
+    locale: ar,
+  });
+  const formattedTime = format(new Date(appointmentDate), "hh:mm a", {
+    locale: ar,
+  });
+
   return `مرحباً ${patientName}، هذا تذكير بموعدك في العيادة بتاريخ ${formattedDate} الساعة ${formattedTime}. نرجو الحضور قبل الموعد بـ15 دقيقة.`;
 };
 
 // Format phone number for WhatsApp (remove all non-digit characters and ensure it starts with country code)
 const formatPhoneNumberForWhatsApp = (phone) => {
   if (!phone) return "";
-  
+
   // Remove all non-digit characters
   let formattedPhone = phone.replace(/\D/g, "");
-  
+
   // If the phone number starts with "0", replace it with the country code (assuming Egypt with +20)
   if (formattedPhone.startsWith("0")) {
     formattedPhone = "20" + formattedPhone.substring(1);
   }
-  
+
   // If the phone number doesn't start with "+", add it
   if (!formattedPhone.startsWith("20")) {
     formattedPhone = "20" + formattedPhone;
   }
-  
+
   return formattedPhone;
 };
 
-export default function AppointmentsTable({ appointments, total, page, pageSize, onPageChange }) {
-  const queryClient = useQueryClient()
+export default function AppointmentsTable({
+  appointments,
+  total,
+  page,
+  pageSize,
+  onPageChange,
+}) {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
   // Added plan data hook
-  const { data: planData } = usePlan()
+  const {data: planData} = usePlan();
   // State for WhatsApp feature modal
-  const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false)
-  
-  const { mutate: updateStatus } = useMutation({
-    mutationFn: ({ id, status }) => updateAppointment(id, { status }),
+  const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
+
+  const {mutate: updateStatus} = useMutation({
+    mutationFn: ({id, status}) => updateAppointment(id, {status}),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["appointments"] })
+      queryClient.invalidateQueries({queryKey: ["appointments"]});
       // Also invalidate dashboard stats to update the counts
-      queryClient.invalidateQueries({ queryKey: ["dashboardStats"] })
-      queryClient.invalidateQueries({ queryKey: ["filteredPatientStats"] })
-      toast.success("تم تحديث حالة الحجز بنجاح")
+      queryClient.invalidateQueries({queryKey: ["dashboardStats"]});
+      queryClient.invalidateQueries({queryKey: ["filteredPatientStats"]});
+      toast.success("تم تحديث حالة الحجز بنجاح");
     },
     onError: (error) => {
-      toast.error(error.message || "فشل في تحديث حالة الحجز")
+      toast.error(error.message || "فشل في تحديث حالة الحجز");
     },
-  })
+  });
 
   const handleStatusChange = (appointmentId, newStatus) => {
-    updateStatus({ id: appointmentId, status: newStatus })
-  }
-  
+    updateStatus({id: appointmentId, status: newStatus});
+  };
+
   // Check if WhatsApp feature is enabled in the plan
-  const isWhatsAppEnabled = planData?.plans?.limits?.features?.whatsapp === true;
-  
+  const isWhatsAppEnabled =
+    planData?.plans?.limits?.features?.whatsapp === true;
+
   const handleSendReminder = (patientPhone, patientName, appointmentDate) => {
     // If WhatsApp is not enabled in the plan, show a modal and return
     if (!isWhatsAppEnabled) {
       setIsWhatsAppModalOpen(true);
       return;
     }
-    
+
     // Format the phone number for WhatsApp
     const formattedPhone = formatPhoneNumberForWhatsApp(patientPhone);
-    
+
     // If phone number is invalid, show an error
     if (!formattedPhone) {
       toast.error("رقم الهاتف غير صحيح");
       return;
     }
-    
+
     const message = generateReminderMessage(patientName, appointmentDate);
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodedMessage}`;
-    window.open(whatsappUrl, '_blank');
+    window.open(whatsappUrl, "_blank");
   };
 
   const columns = [
@@ -132,20 +145,24 @@ export default function AppointmentsTable({ appointments, total, page, pageSize,
       header: "اسم المريض",
       accessor: "patientName",
       cellClassName: "font-medium",
-      render: (appointment) => appointment.patient?.name || "غير محدد"
+      render: (appointment) => appointment.patient?.name || "غير محدد",
     },
     {
       header: "رقم الهاتف",
       accessor: "patientPhone",
       cellClassName: "text-muted-foreground",
-      render: (appointment) => appointment.patient?.phone || "-"
+      render: (appointment) => appointment.patient?.phone || "-",
     },
     {
       header: "التاريخ والوقت",
       accessor: "date",
       cellClassName: "text-muted-foreground",
-      render: (appointment) => 
-        appointment.date ? format(new Date(appointment.date), "dd MMMM yyyy - hh:mm a", { locale: ar }) : "غير محدد"
+      render: (appointment) =>
+        appointment.date
+          ? format(new Date(appointment.date), "dd MMMM yyyy - hh:mm a", {
+              locale: ar,
+            })
+          : "غير محدد",
     },
     {
       header: "نوع الحجز",
@@ -156,7 +173,8 @@ export default function AppointmentsTable({ appointments, total, page, pageSize,
       header: "السعر (جنيه)",
       accessor: "price",
       cellClassName: "text-muted-foreground",
-      render: (appointment) => appointment.price ? appointment.price.toFixed(2) : "0.00"
+      render: (appointment) =>
+        appointment.price ? appointment.price.toFixed(2) : "0.00",
     },
     {
       header: "المصدر",
@@ -180,18 +198,31 @@ export default function AppointmentsTable({ appointments, total, page, pageSize,
       header: "",
       render: (appointment) => (
         <div className="flex items-center gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 w-8 p-0"
+            onClick={() => navigate(`/calendar/appointments/${appointment.id}`)}
+            title="عرض تفاصيل الحجز">
+            <Eye className="h-4 w-4" />
+          </Button>
           {isWithinTwoHours(appointment.date) && (
             <Button
               variant="outline"
               size="sm"
               className="h-8 w-8 p-0"
-              onClick={() => handleSendReminder(
-                appointment.patient?.phone, 
-                appointment.patient?.name, 
-                appointment.date
-              )}
-              title={!isWhatsAppEnabled ? "خطتك الحالية لا تدعم إرسال رسائل WhatsApp" : "إرسال تذكير عبر الواتساب"}
-            >
+              onClick={() =>
+                handleSendReminder(
+                  appointment.patient?.phone,
+                  appointment.patient?.name,
+                  appointment.date
+                )
+              }
+              title={
+                !isWhatsAppEnabled
+                  ? "خطتك الحالية لا تدعم إرسال رسائل WhatsApp"
+                  : "إرسال تذكير عبر الواتساب"
+              }>
               <Bell className="h-4 w-4" />
             </Button>
           )}
@@ -201,22 +232,25 @@ export default function AppointmentsTable({ appointments, total, page, pageSize,
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent 
-              align="end" 
+            <DropdownMenuContent
+              align="end"
               sideOffset={5}
               collisionPadding={10}
-              avoidCollisions
-            >
-              <DropdownMenuItem onClick={() => handleStatusChange(appointment.id, "pending")}>
+              avoidCollisions>
+              <DropdownMenuItem
+                onClick={() => handleStatusChange(appointment.id, "pending")}>
                 تغيير إلى قيد الانتظار
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleStatusChange(appointment.id, "confirmed")}>
+              <DropdownMenuItem
+                onClick={() => handleStatusChange(appointment.id, "confirmed")}>
                 تغيير إلى مؤكد
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleStatusChange(appointment.id, "completed")}>
+              <DropdownMenuItem
+                onClick={() => handleStatusChange(appointment.id, "completed")}>
                 تغيير إلى مكتمل
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleStatusChange(appointment.id, "cancelled")}>
+              <DropdownMenuItem
+                onClick={() => handleStatusChange(appointment.id, "cancelled")}>
                 تغيير إلى ملغي
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -224,24 +258,24 @@ export default function AppointmentsTable({ appointments, total, page, pageSize,
         </div>
       ),
     },
-  ]
+  ];
 
   return (
     <>
       <Card>
         <CardContent className="p-0">
-          <DataTable 
-            columns={columns} 
-            data={appointments ?? []} 
-            total={total} 
-            page={page} 
-            pageSize={pageSize} 
-            onPageChange={onPageChange} 
+          <DataTable
+            columns={columns}
+            data={appointments ?? []}
+            total={total}
+            page={page}
+            pageSize={pageSize}
+            onPageChange={onPageChange}
             emptyLabel="لا توجد مواعيد"
           />
         </CardContent>
       </Card>
-      
+
       {/* WhatsApp Feature Not Available Modal */}
       <Dialog open={isWhatsAppModalOpen} onOpenChange={setIsWhatsAppModalOpen}>
         <DialogContent>
@@ -257,12 +291,10 @@ export default function AppointmentsTable({ appointments, total, page, pageSize,
             </p>
           </div>
           <DialogFooter>
-            <Button onClick={() => setIsWhatsAppModalOpen(false)}>
-              إغلاق
-            </Button>
+            <Button onClick={() => setIsWhatsAppModalOpen(false)}>إغلاق</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }

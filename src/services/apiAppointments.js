@@ -287,3 +287,36 @@ export async function getAppointmentsByPatientId(patientId) {
     if (error) throw error
     return data ?? []
 }
+
+// New function to get a single appointment by ID
+export async function getAppointmentById(id) {
+    // Get current user's clinic_id
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) throw new Error("Not authenticated")
+
+    const { data: userData } = await supabase
+        .from("users")
+        .select("clinic_id")
+        .eq("user_id", session.user.id)
+        .single()
+
+    if (!userData?.clinic_id) throw new Error("User has no clinic assigned")
+
+    const { data, error } = await supabase
+        .from("appointments")
+        .select(`
+      id,
+      date,
+      notes,
+      price,
+      status,
+      from,
+      patient:patients(id, name, phone)
+    `)
+        .eq("id", id)
+        .eq("clinic_id", userData.clinic_id)
+        .single()
+
+    if (error) throw error
+    return data
+}

@@ -1,58 +1,68 @@
-import { useMemo } from "react";
-import { CheckCircle2 } from "lucide-react";
-import { formatCurrency } from "../../lib/utils";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
+import {useEffect, useState} from "react";
+import {CheckCircle2} from "lucide-react";
+import {formatCurrency} from "../../lib/utils";
+import {Badge} from "../ui/badge";
+import {Button} from "../ui/button";
+import {Card, CardContent, CardFooter, CardHeader} from "../ui/card";
+import {useNavigate} from "react-router-dom";
+import usePricingPlans from "../../features/settings/usePricingPlans";
 
 export default function Pricing() {
-  // Memoize plans data to prevent unnecessary re-renders
-  const plans = useMemo(() => [
-    {
-      name: "الأساسية",
-      price: 0,
-      description: "مثالية للعيادات الصغيرة التي تبدأ رحلتها الرقمية",
-      features: [
-        "إدارة المواعيد الأساسية",
-        "ملف طبي إلكتروني",
-        "إنشاء وطباعة الروشتة",
-        "إدارة المرضى (حتى 100 مريض)",
-        "دعم عبر البريد الإلكتروني"
-      ],
-      cta: "ابدأ مجاناً",
-      popular: false
-    },
-    {
-      name: "القياسية",
-      price: 199,
-      description: "للعيادات التي تبحث عن حلول شاملة لإدارة أعمالها",
-      features: [
-        "جميع مزايا الخطة الأساسية",
-        "روشتة PDF تُرسل تلقائياً عبر واتساب",
-        "تقارير مالية وإيرادات",
-        "إدارة السكرتير",
-        "إدارة المرضى (حتى 500 مريض)",
-        "دعم فني خلال ساعات العمل"
-      ],
-      cta: "اختيار الخطة",
-      popular: true
-    },
-    {
-      name: "المميزة",
-      price: 399,
-      description: "للمؤسسات الطبية الكبيرة التي تحتاج لحل شامل ومتكامل",
-      features: [
-        "جميع مزايا الخطة القياسية",
-        "تقارير تحليلية متقدمة",
-        "إدارة متعددة الأفرع",
-        "إدارة المرضى (عدد غير محدود)",
-        "دعم فني على مدار الساعة",
-        "تحديثات مخصصة وتطوير خاص"
-      ],
-      cta: "اختيار الخطة",
-      popular: false
-    }
-  ], []);
+  const navigate = useNavigate();
+  const {data: plans = [], isLoading, error} = usePricingPlans();
+
+  console.log(plans);
+
+  if (isLoading) {
+    return (
+      <section id="pricing" className="container py-20 mx-auto">
+        <div className="text-center space-y-4">
+          <h2 className="text-3xl font-bold">خطط تسعير مرنة</h2>
+          <p className="text-muted-foreground">
+            اختر الخطة المناسبة لعيادتك وابدأ خلال دقائق.
+          </p>
+        </div>
+        <div className="mt-10 grid md:grid-cols-3 gap-6">
+          {[...Array(3)].map((_, index) => (
+            <Card key={index} className="animate-pulse">
+              <CardHeader>
+                <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-full"></div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                <div className="space-y-2">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="h-4 bg-gray-200 rounded"></div>
+                  ))}
+                </div>
+              </CardContent>
+              <CardFooter>
+                <div className="h-10 bg-gray-200 rounded w-full"></div>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section id="pricing" className="container py-20 mx-auto">
+        <div className="text-center space-y-4">
+          <h2 className="text-3xl font-bold">خطط تسعير مرنة</h2>
+          <p className="text-destructive">
+            حدث خطأ أثناء تحميل خطط التسعير. يرجى المحاولة مرة أخرى لاحقًا.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  const handleSelectPlan = (planId) => {
+    navigate(`/plan/${planId}`);
+  };
 
   return (
     <section id="pricing" className="container py-20 mx-auto">
@@ -64,10 +74,9 @@ export default function Pricing() {
       </div>
       <div className="mt-10 grid md:grid-cols-3 gap-6">
         {plans.map((plan, index) => (
-          <Card 
-            key={index} 
-            className={plan.popular ? "border-primary/40 relative" : ""}
-          >
+          <Card
+            key={index}
+            className={plan.popular ? "border-primary/40 relative" : ""}>
             {plan.popular && (
               <Badge className="absolute top-4 end-4 bg-primary/10 text-primary">
                 الأكثر شعبية
@@ -75,12 +84,16 @@ export default function Pricing() {
             )}
             <CardHeader>
               <h3 className="text-xl font-semibold">{plan.name}</h3>
-              <p className="text-sm text-muted-foreground">{plan.description}</p>
+              <p className="text-sm text-muted-foreground">
+                {plan.description}
+              </p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-3xl font-bold">
                 {plan.price === 0 ? "مجاني" : formatCurrency(plan.price)}
-                {plan.price > 0 && <span className="text-sm text-muted-foreground">/شهر</span>}
+                {plan.price > 0 && (
+                  <span className="text-sm text-muted-foreground">/شهر</span>
+                )}
               </div>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 {plan.features.map((feature, featureIndex) => (
@@ -92,8 +105,11 @@ export default function Pricing() {
               </ul>
             </CardContent>
             <CardFooter>
-              <Button className="w-full" variant={plan.popular ? "default" : "outline"}>
-                {plan.cta}
+              <Button
+                onClick={() => handleSelectPlan(plan.id)}
+                className="w-full"
+                variant={plan.popular ? "default" : "outline"}>
+                اختر الباقة
               </Button>
             </CardFooter>
           </Card>

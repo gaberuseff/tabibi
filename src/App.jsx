@@ -9,9 +9,11 @@ import PublicRoute from "./features/auth/PublicRoute";
 import PatientDetailPage from "./features/patients/PatientDetailPage";
 import PatientPlanDetailPage from "./features/patients/PatientPlanDetailPage";
 import VisitDetailPage from "./features/patients/VisitDetailPage";
+import AppointmentDetailPage from "./features/calendar/AppointmentDetailPage";
 import Booking from "./pages/Booking";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
+import PlanConfirmation from "./pages/PlanConfirmation";
 import Signup from "./pages/Signup";
 import Calendar from "./pages/doctor/Calendar";
 import Clinic from "./pages/doctor/Clinic";
@@ -23,6 +25,7 @@ import TreatmentPlans from "./pages/doctor/TreatmentPlans";
 // Memoize route components to prevent unnecessary re-renders
 const MemoizedLanding = memo(Landing);
 const MemoizedLogin = memo(Login);
+const MemoizedPlanConfirmation = memo(PlanConfirmation);
 const MemoizedSignup = memo(Signup);
 const MemoizedBooking = memo(Booking);
 const MemoizedDashboard = memo(Dashboard);
@@ -31,6 +34,7 @@ const MemoizedPatients = memo(Patients);
 const MemoizedPatientDetailPage = memo(PatientDetailPage);
 const MemoizedVisitDetailPage = memo(VisitDetailPage);
 const MemoizedPatientPlanDetailPage = memo(PatientPlanDetailPage);
+const MemoizedAppointmentDetailPage = memo(AppointmentDetailPage);
 const MemoizedClinic = memo(Clinic);
 const MemoizedTreatmentPlans = memo(TreatmentPlans);
 const MemoizedSettings = memo(Settings);
@@ -49,6 +53,7 @@ function App() {
               </PublicRoute>
             }
           />
+          <Route path="/plan/:planId" element={<MemoizedPlanConfirmation />} />
           <Route
             path="/signup"
             element={
@@ -132,6 +137,14 @@ function App() {
               element={
                 <PermissionGuard requiredPermission="settings">
                   <MemoizedSettings />
+                </PermissionGuard>
+              }
+            />
+            <Route
+              path="/calendar/appointments/:appointmentId"
+              element={
+                <PermissionGuard requiredPermission="calendar">
+                  <MemoizedAppointmentDetailPage />
                 </PermissionGuard>
               }
             />

@@ -545,3 +545,125 @@ CREATE TRIGGER update_patient_plans_updated_at
 BEFORE UPDATE ON patient_plans
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
+
+-- Create settings table for pricing plans
+CREATE TABLE IF NOT EXISTS settings (
+  id TEXT PRIMARY KEY,
+  cta TEXT NOT NULL,
+  name TEXT NOT NULL,
+  price DECIMAL(10, 2) NOT NULL,
+  popular BOOLEAN NOT NULL DEFAULT false,
+  features TEXT[] NOT NULL,
+  description TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable Row Level Security (RLS) for settings
+ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Allow public read access to settings (for pricing plans)
+CREATE POLICY "Public can read settings"
+ON settings
+FOR SELECT
+USING (true);
+
+-- Create trigger to automatically update updated_at
+CREATE TRIGGER update_settings_updated_at
+BEFORE UPDATE ON settings
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+-- Create plans table for subscription plans
+CREATE TABLE IF NOT EXISTS plans (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  price DECIMAL(10, 2) NOT NULL,
+  limits JSONB,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable Row Level Security (RLS) for plans
+ALTER TABLE plans ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Allow public read access to plans
+CREATE POLICY "Public can read plans"
+ON plans
+FOR SELECT
+USING (true);
+
+-- Create trigger to automatically update updated_at for plans
+CREATE TRIGGER update_plans_updated_at
+BEFORE UPDATE ON plans
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+-- Create subscriptions table for tracking clinic subscriptions
+CREATE TABLE IF NOT EXISTS subscriptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  clinic_id BIGINT NOT NULL,
+  plan_id TEXT NOT NULL REFERENCES plans(id),
+  status TEXT NOT NULL CHECK (status IN ('active', 'cancelled')),
+  current_period_start TIMESTAMP WITH TIME ZONE NOT NULL,
+  current_period_end TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create index on subscriptions clinic_id
+CREATE INDEX IF NOT EXISTS idx_subscriptions_clinic_id ON subscriptions(clinic_id);
+
+-- Create index on subscriptions plan_id
+CREATE INDEX IF NOT EXISTS idx_subscriptions_plan_id ON subscriptions(plan_id);
+
+-- Create index on subscriptions status
+CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status);
+
+-- Enable Row Level Security (RLS) for subscriptions
+ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Allow doctors to read their own subscriptions
+CREATE POLICY "Doctors can read their subscriptions"
+ON subscriptions
+FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM users u
+    WHERE u.id = auth.uid()
+    AND u.role = 'doctor'
+    AND u.clinic_id = subscriptions.clinic_id
+  )
+);
+
+-- Policy: Allow doctors to insert subscriptions for their clinic
+CREATE POLICY "Doctors can insert subscriptions"
+ON subscriptions
+FOR INSERT
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM users u
+    WHERE u.id = auth.uid()
+    AND u.role = 'doctor'
+    AND u.clinic_id = subscriptions.clinic_id
+  )
+);
+
+-- Policy: Allow doctors to update their subscriptions
+CREATE POLICY "Doctors can update their subscriptions"
+ON subscriptions
+FOR UPDATE
+USING (
+  EXISTS (
+    SELECT 1 FROM users u
+    WHERE u.id = auth.uid()
+    AND u.role = 'doctor'
+    AND u.clinic_id = subscriptions.clinic_id
+  )
+);
+
+-- Create trigger to automatically update updated_at for subscriptions
+CREATE TRIGGER update_subscriptions_updated_at
+BEFORE UPDATE ON subscriptions
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
