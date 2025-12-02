@@ -1,14 +1,14 @@
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { Button } from "../../components/ui/button";
 import {
   Dialog,
-  DialogHeader,
   DialogContent,
   DialogFooter,
+  DialogHeader,
 } from "../../components/ui/dialog";
-import {Button} from "../../components/ui/button";
-import {useForm} from "react-hook-form";
-import useCreatePatient from "./useCreatePatient";
 import PatientForm from "./PatientForm";
-import toast from "react-hot-toast";
+import useCreatePatient from "./useCreatePatient";
 
 export default function PatientCreateDialog({open, onClose, onPatientCreated, clinicId}) {
   const {
@@ -30,7 +30,6 @@ export default function PatientCreateDialog({open, onClose, onPatientCreated, cl
         blood_type: values.blood_type || null,
         clinic_id: clinicId
       };
-      console.log(payload);
       const newPatient = await mutateAsync(payload);
       toast.success("تم إضافة المريض بنجاح");
       reset();
@@ -39,7 +38,7 @@ export default function PatientCreateDialog({open, onClose, onPatientCreated, cl
       }
       onClose?.();
     } catch (e) {
-      toast.error("حدث خطأ أثناء الإضافة");
+      toast.error(e.message);
     }
   }
 
@@ -58,7 +57,7 @@ export default function PatientCreateDialog({open, onClose, onPatientCreated, cl
           إلغاء
         </Button>
         <Button form="create-patient-form" type="submit" disabled={isPending}>
-          حفظ
+          {isPending ? "جارٍ الإضافة..." : "اضافة"}
         </Button>
       </DialogFooter>
     </Dialog>

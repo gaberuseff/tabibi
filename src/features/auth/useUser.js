@@ -6,7 +6,8 @@ export default function useUser() {
         queryKey: ["user"],
         queryFn: getCurrentUser,
         retry: false,
-        staleTime: Infinity,
+        // Increase staleTime to reduce unnecessary API calls
+        staleTime: 5 * 60 * 1000, // 5 minutes
         refetchOnWindowFocus: false,
     })
 }

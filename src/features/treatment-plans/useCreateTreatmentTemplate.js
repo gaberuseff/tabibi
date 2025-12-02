@@ -16,7 +16,7 @@ export default function useCreateTreatmentTemplate() {
         },
         onError: (error) => {
             console.error("Error creating treatment template:", error);
-            toast.error("حدث خطأ أثناء إضافة خطة العлаج");
+            toast.error(error.message);
         },
     });
 

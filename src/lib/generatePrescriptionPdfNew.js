@@ -1,5 +1,8 @@
-export default async function generatePrescriptionPdfNew(visit, doctorName, clinicName, clinicAddress, shareViaWhatsApp = false) {
+export default async function generatePrescriptionPdfNew(visit, doctorName, clinicName, clinicAddress, shareViaWhatsApp = false, planData = null) {
   try {
+    // Check if watermark feature is enabled in the plan
+    const isWatermarkEnabled = planData?.plans?.limits?.features?.watermark === true;
+
     // Create a minimalist, eye-friendly HTML version for printing
     const printContent = `
       <!DOCTYPE html>
@@ -22,26 +25,45 @@ export default async function generatePrescriptionPdfNew(visit, doctorName, clin
             padding: 0;
             color: #333;
             direction: rtl;
+            position: relative;
           }
           
           .prescription-container {
             width: 100%;
-            height: 297mm;
+            min-height: 297mm;
             margin: 0 auto;
             background: white;
-            padding: 10mm;
+            padding: 5mm;
             position: relative;
           }
           
+          ${isWatermarkEnabled ? `
+          .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            opacity: 0.1;
+            font-size: 120px;
+            font-weight: bold;
+            color: #2980b9;
+            pointer-events: none;
+            z-index: 1000;
+            white-space: nowrap;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.2);
+            user-select: none;
+          }
+          ` : ''}
+          
           .header {
-            margin-bottom: 5mm;
+            margin-bottom: 3mm;
           }
           
           .doctor-date-info {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 2mm;
+            margin-bottom: 1mm;
           }
           
           .doctor-info {
@@ -65,30 +87,30 @@ export default async function generatePrescriptionPdfNew(visit, doctorName, clin
           .divider {
             height: 1mm;
             background-color: #ecf0f1;
-            margin: 8mm 0;
+            margin: 5mm 0;
           }
           
           .section {
-            margin-bottom: 8mm;
+            margin-bottom: 5mm;
           }
           
           .section-title {
             font-size: 5mm;
             font-weight: 500;
             color: #3498db;
-            margin-bottom: 3mm;
-            padding-bottom: 1.5mm;
+            margin-bottom: 2mm;
+            padding-bottom: 1mm;
             border-bottom: 0.3mm solid #ecf0f1;
           }
           
           .medications-list {
-            padding: 2mm;
-            max-height: 120mm;
+            padding: 1mm;
+            max-height: 140mm;
             overflow: hidden;
           }
           
           .medication-item {
-            padding: 2.5mm 0;
+            padding: 2mm 0;
             border-bottom: 0.3mm solid #ecf0f1;
             display: flex;
           }
@@ -102,7 +124,7 @@ export default async function generatePrescriptionPdfNew(visit, doctorName, clin
             font-weight: 500;
             font-size: 4mm;
             min-width: 7mm;
-            margin-left: 2.5mm;
+            margin-left: 2mm;
           }
           
           .med-details {
@@ -127,27 +149,31 @@ export default async function generatePrescriptionPdfNew(visit, doctorName, clin
           
           .no-medications {
             text-align: center;
-            padding: 4mm;
+            padding: 3mm;
             color: #95a5a6;
             font-style: italic;
           }
           
           .signature-section {
-            margin-top: 12mm;
-            padding-top: 4mm;
+            margin-top: 8mm;
+            padding-top: 3mm;
             border-top: 0.3mm solid #ecf0f1;
+            position: fixed;
+            bottom: 15mm;
+            left: 5mm;
+            right: 5mm;
           }
           
           .signature-label {
             font-weight: 500;
             color: #7f8c8d;
-            margin-bottom: 8mm;
+            margin-bottom: 5mm;
           }
           
           .signature-line {
             width: 50mm;
             border-top: 0.3mm solid #bdc3c7;
-            padding-top: 1.5mm;
+            padding-top: 1mm;
             font-size: 3mm;
             color: #95a5a6;
           }
@@ -156,27 +182,31 @@ export default async function generatePrescriptionPdfNew(visit, doctorName, clin
             text-align: center;
             color: #bdc3c7;
             font-size: 3mm;
-            margin-top: 8mm;
-            padding-top: 3mm;
-            border-top: 0.3mm solid #ecf0f1;
+            position: fixed;
+            bottom: 5mm;
+            left: 0;
+            right: 0;
           }
           
           @media print {
             body {
               background: white;
               padding: 0;
+              margin: 0;
             }
             
             .prescription-container {
               width: 100%;
+              min-height: 297mm;
               height: 297mm;
               box-shadow: none;
-              padding: 10mm;
+              padding: 5mm;
               page-break-inside: avoid;
+              margin: 0;
             }
             
             .medications-list {
-              max-height: 120mm;
+              max-height: 140mm;
               overflow: hidden;
             }
           }
@@ -184,6 +214,7 @@ export default async function generatePrescriptionPdfNew(visit, doctorName, clin
       </head>
       <body>
         <div class="prescription-container">
+          ${isWatermarkEnabled ? '<div class="watermark">tabibi.eg</div>' : ''}
           <div class="header">
             <div class="doctor-date-info">
               <div class="doctor-info">دكتور: ${doctorName || 'اسم الطبيب غير متوفر'}</div>

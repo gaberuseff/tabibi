@@ -44,12 +44,37 @@ export async function createPatient(payload) {
 
   if (!userData?.clinic_id) throw new Error("User has no clinic assigned")
 
+  // get clinic subscription plan
+  const { data: subscription } = await supabase
+    .from('subscriptions')
+    .select('*, plans(limits)')
+    .eq('clinic_id', userData.clinic_id)
+    .eq('status', 'active')
+    .single()
+
+  if (!subscription) throw new Error("لا يوجد اشتراك مفعل")
+
+  const maxPatients = subscription.plans.limits.max_patients
+  const periodStart = subscription.current_period_start
+
+  // 3. احسب عدد المرضى المضافين في الشهر الحالي فقط
+  if (maxPatients !== -1) {
+    const { count } = await supabase
+      .from('patients')
+      .select('*', { count: 'exact', head: true })
+      .eq('clinic_id', userData.clinic_id)
+      .gte('created_at', periodStart) // أهم شرط: أكبر من أو يساوي تاريخ بداية الباقة
+
+    // 4. المقارنة الحاسمة
+    if (count >= maxPatients) {
+      throw new Error("لقد تجاوزت الحد المسموح من المرضى لهذا الشهر. يرجى ترقية الباقة.")
+    }
+  }
   // Add clinic_id to the patient data
   const patientData = {
     ...payload,
     clinic_id: payload.clinic_id || userData.clinic_id
   }
-
 
   const { data, error } = await supabase
     .from("patients")

@@ -117,6 +117,34 @@ export async function createAppointment(payload) {
 
     if (!userData?.clinic_id) throw new Error("User has no clinic assigned")
 
+    // get clinic subscription plan
+    const { data: subscription } = await supabase
+        .from('subscriptions')
+        .select('*, plans(limits)')
+        .eq('clinic_id', userData.clinic_id)
+        .eq('status', 'active')
+        .single()
+
+    if (!subscription) throw new Error("لا يوجد اشتراك مفعل")
+
+    const maxAppointments = subscription.plans.limits.max_appointments
+    const periodStart = subscription.current_period_start
+
+    // Check if maxPatients is -1 (unlimited), skip the count check if so
+    if (maxAppointments !== -1) {
+        // 3. احسب عدد المرضى المضافين في الشهر الحالي فقط
+        const { count } = await supabase
+            .from('appointments')
+            .select('*', { count: 'exact', head: true })
+            .eq('clinic_id', userData.clinic_id)
+            .gte('created_at', periodStart) // أهم شرط: أكبر من أو يساوي تاريخ بداية الباقة
+
+        // 4. المقارنة الحاسمة
+        if (count >= maxAppointments) {
+            throw new Error("لقد تجاوزت الحد المسموح من المواعيد لهذا الشهر. يرجى ترقية الباقة.")
+        }
+    }
+
     // Add clinic_id to the appointment data
     const appointmentData = {
         ...payload,

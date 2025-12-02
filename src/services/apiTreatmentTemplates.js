@@ -13,6 +13,31 @@ export async function createTreatmentTemplate(payload) {
 
     if (!userData?.clinic_id) throw new Error("User has no clinic assigned");
 
+    // get clinic subscription plan
+    const { data: subscription } = await supabase
+        .from('subscriptions')
+        .select('*, plans(limits)')
+        .eq('clinic_id', userData.clinic_id)
+        .eq('status', 'active')
+        .single()
+
+    if (!subscription) throw new Error("لا يوجد اشتراك مفعل")
+
+    const maxTreatmentTemplates = subscription.plans.limits.max_treatment_templates
+
+    if (maxTreatmentTemplates !== -1) {
+        // 3. احسب عدد المرضى المضافين في الشهر الحالي فقط
+        const { count } = await supabase
+            .from('treatment_templates')
+            .select('*', { count: 'exact', head: true })
+            .eq('clinic_id', userData.clinic_id)
+
+        // 4. المقارنة الحاسمة
+        if (count >= maxTreatmentTemplates) {
+            throw new Error("لقد تجاوزت الحد المسموح من الخطط. يرجى ترقية الباقة.")
+        }
+    }
+
     // Add clinic_id to the treatment template data
     const treatmentTemplateData = {
         ...payload,

@@ -41,7 +41,6 @@ export default function TreatmentTemplateCreateDialog({ open, onClose, onTemplat
       handleClose();
     } catch (e) {
       console.error("Error creating treatment template:", e);
-      toast.error("حدث خطأ أثناء إضافة خطة العلاج");
     }
   }
 

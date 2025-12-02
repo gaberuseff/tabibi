@@ -29,7 +29,7 @@ export default function Features() {
         <FeatureCard icon={FileText} title="ملف طبي إلكتروني EMR" desc="حفظ التاريخ المرضي والمرفقات والملاحظات لكل مريض بشكل منظم." />
         <FeatureCard icon={Receipt} title="فواتير وإيرادات" desc="إدارة الفواتير وتتبع الإيرادات مع تقارير مالية واضحة." />
         <FeatureCard icon={ShieldCheck} title="أمان وخصوصية" desc="تشفير وحماية بيانات المرضى وفق أعلى المعايير." />
-        <FeatureCard icon={Stethoscope} title="روشتة PDF عبر واتساب" desc="توليد روشتة تلقائياً وإرسالها للمريض مباشرة." />
+        <FeatureCard icon={Stethoscope} title="روشتة PDF عبر واتساب" desc="توليد روشتة تلقائياً وطباعتها مع امكانية ارسال محتوياتها للمريض عبر واتساب." />
         <FeatureCard icon={Smartphone} title="واجهة تدعم الجوال" desc="تصميم متجاوب يعمل بسلاسة على الهواتف." />
       </div>
     </section>

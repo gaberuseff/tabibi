@@ -1,8 +1,6 @@
 import supabase from "./supabase";
 
 export async function createPatientPlan(payload) {
-    console.log("Creating patient plan with payload:", payload);
-
     // Get current user's clinic_id
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error("Not authenticated");
@@ -21,8 +19,6 @@ export async function createPatientPlan(payload) {
         clinic_id: userData.clinic_id
     };
 
-    console.log("Inserting patient plan data:", patientPlanData);
-
     const { data, error } = await supabase
         .from("patient_plans")
         .insert(patientPlanData)
@@ -34,7 +30,6 @@ export async function createPatientPlan(payload) {
         throw error;
     }
 
-    console.log("Successfully created patient plan:", data);
     return data;
 }
 

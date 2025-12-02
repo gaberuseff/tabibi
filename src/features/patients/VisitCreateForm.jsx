@@ -37,46 +37,57 @@ export default function VisitCreateForm({ patientId, onVisitCreated }) {
         });
     }
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault()
         
+        // Validate required fields
         if (!diagnosis.trim()) {
-            // Show error message
-            const errorMessage = document.createElement("div")
-            errorMessage.className = "text-destructive text-sm mt-1"
-            errorMessage.textContent = "الرجاء إدخال التشخيص المبدئي"
+            // Create error message element
+            const errorMessage = document.createElement('div')
+            errorMessage.className = 'text-sm text-red-500 mt-1'
+            errorMessage.textContent = 'التشخيص المبدئي مطلوب'
+            errorMessage.id = 'diagnosis-error'
             
-            // Remove any existing error message
-            const existingError = document.querySelector("#diagnosis-error")
-            if (existingError) existingError.remove()
+            // Remove existing error if any
+            const existingError = document.getElementById('diagnosis-error')
+            if (existingError) {
+                existingError.remove()
+            }
             
-            // Add new error message
-            const diagnosisInput = document.getElementById("diagnosis")
-            diagnosisInput.parentNode.appendChild(errorMessage)
-            errorMessage.id = "diagnosis-error"
-            
-            // Remove error after 3 seconds
-            setTimeout(() => {
-                if (errorMessage.parentNode) {
-                    errorMessage.parentNode.removeChild(errorMessage)
-                }
-            }, 3000)
+            // Add error message after diagnosis input
+            const diagnosisInput = document.getElementById('diagnosis')
+            if (diagnosisInput) {
+                diagnosisInput.parentNode.appendChild(errorMessage)
+                
+                // Remove error message after 3 seconds
+                setTimeout(() => {
+                    const errorMessage = document.getElementById('diagnosis-error')
+                    if (errorMessage && errorMessage.parentNode) {
+                        errorMessage.parentNode.removeChild(errorMessage)
+                    }
+                }, 3000)
+            }
             
             return
         }
-
+        
         // Prepare medications array - only include medications with both name and using
         const validMedications = medications.filter(
             med => med.name.trim() !== "" && med.using.trim() !== ""
         )
-
+        
+        // Prepare visit data
         const visitData = {
             patient_id: patientId,
             diagnosis,
-            notes,
-            medications: validMedications.length > 0 ? validMedications : null
+            notes
         }
-
+        
+        // Only add medications if there are valid ones
+        if (validMedications.length > 0) {
+            visitData.medications = validMedications
+        }
+        
         createVisit(visitData, {
             onSuccess: () => {
                 // Reset form

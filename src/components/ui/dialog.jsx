@@ -28,8 +28,8 @@ export function DialogHeader({children}) {
   return <div className="p-6 border-b border-border">{children}</div>;
 }
 
-export function DialogContent({children}) {
-  return <div className="p-6">{children}</div>;
+export function DialogContent({children, className}) {
+  return <div className={cn("p-6", className)}>{children}</div>;
 }
 
 export function DialogTitle({children}) {

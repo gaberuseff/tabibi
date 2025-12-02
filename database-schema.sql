@@ -14,7 +14,6 @@ CREATE TABLE IF NOT EXISTS users (
   phone TEXT NOT NULL,
   role TEXT NOT NULL CHECK (role IN ('doctor', 'secretary')),
   clinic_id BIGINT NOT NULL,
-  subscription TEXT CHECK (subscription IN ('basic', 'professional', 'premium')),
   permissions TEXT[],
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

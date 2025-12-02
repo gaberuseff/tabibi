@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 // Check if speech recognition is supported
 const isSpeechRecognitionSupported = () => {
@@ -22,7 +22,7 @@ export default function useSpeechRecognition() {
 
         recognition.continuous = true // Keep listening for a short period
         recognition.interimResults = true
-        recognition.lang = "ar-SA"
+        recognition.lang = "ar-EG"
         recognition.maxAlternatives = 1
 
         recognition.onresult = (event) => {

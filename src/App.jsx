@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Toaster } from "react-hot-toast";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import DoctorLayout from "./components/layout/DoctorLayout";
@@ -19,17 +20,32 @@ import Patients from "./pages/doctor/Patients";
 import Settings from "./pages/doctor/Settings";
 import TreatmentPlans from "./pages/doctor/TreatmentPlans";
 
+// Memoize route components to prevent unnecessary re-renders
+const MemoizedLanding = memo(Landing);
+const MemoizedLogin = memo(Login);
+const MemoizedSignup = memo(Signup);
+const MemoizedBooking = memo(Booking);
+const MemoizedDashboard = memo(Dashboard);
+const MemoizedCalendar = memo(Calendar);
+const MemoizedPatients = memo(Patients);
+const MemoizedPatientDetailPage = memo(PatientDetailPage);
+const MemoizedVisitDetailPage = memo(VisitDetailPage);
+const MemoizedPatientPlanDetailPage = memo(PatientPlanDetailPage);
+const MemoizedClinic = memo(Clinic);
+const MemoizedTreatmentPlans = memo(TreatmentPlans);
+const MemoizedSettings = memo(Settings);
+
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          <Route path="/" element={<Landing />} />
+          <Route path="/" element={<MemoizedLanding />} />
           <Route
             path="/login"
             element={
               <PublicRoute>
-                <Login />
+                <MemoizedLogin />
               </PublicRoute>
             }
           />
@@ -37,7 +53,7 @@ function App() {
             path="/signup"
             element={
               <PublicRoute>
-                <Signup />
+                <MemoizedSignup />
               </PublicRoute>
             }
           />
@@ -52,7 +68,7 @@ function App() {
               path="/dashboard" 
               element={
                 <PermissionGuard requiredPermission="dashboard">
-                  <Dashboard />
+                  <MemoizedDashboard />
                 </PermissionGuard>
               } 
             />
@@ -60,7 +76,7 @@ function App() {
               path="/calendar" 
               element={
                 <PermissionGuard requiredPermission="calendar">
-                  <Calendar />
+                  <MemoizedCalendar />
                 </PermissionGuard>
               } 
             />
@@ -68,7 +84,7 @@ function App() {
               path="/patients" 
               element={
                 <PermissionGuard requiredPermission="patients">
-                  <Patients />
+                  <MemoizedPatients />
                 </PermissionGuard>
               } 
             />
@@ -76,7 +92,7 @@ function App() {
               path="/patients/:id" 
               element={
                 <PermissionGuard requiredPermission="patients">
-                  <PatientDetailPage />
+                  <MemoizedPatientDetailPage />
                 </PermissionGuard>
               } 
             />
@@ -84,7 +100,7 @@ function App() {
               path="/patients/:patientId/visits/:visitId" 
               element={
                 <PermissionGuard requiredPermission="patients">
-                  <VisitDetailPage />
+                  <MemoizedVisitDetailPage />
                 </PermissionGuard>
               } 
             />
@@ -92,7 +108,7 @@ function App() {
               path="/patients/:patientId/plans/:planId" 
               element={
                 <PermissionGuard requiredPermission="patients">
-                  <PatientPlanDetailPage />
+                  <MemoizedPatientPlanDetailPage />
                 </PermissionGuard>
               } 
             />
@@ -100,7 +116,7 @@ function App() {
               path="/clinic" 
               element={
                 <PermissionGuard requiredPermission="clinic">
-                  <Clinic />
+                  <MemoizedClinic />
                 </PermissionGuard>
               } 
             />
@@ -108,7 +124,7 @@ function App() {
               path="/treatment-plans" 
               element={
                 <PermissionGuard requiredPermission="patients">
-                  <TreatmentPlans />
+                  <MemoizedTreatmentPlans />
                 </PermissionGuard>
               } 
             />
@@ -116,12 +132,12 @@ function App() {
               path="/settings" 
               element={
                 <PermissionGuard requiredPermission="settings">
-                  <Settings />
+                  <MemoizedSettings />
                 </PermissionGuard>
               } 
             />
           </Route>
-          <Route path="/booking/:clinicId" element={<Booking />} />
+          <Route path="/booking/:clinicId" element={<MemoizedBooking />} />
         </Routes>
         <Toaster position="top-center" />
       </AuthProvider>

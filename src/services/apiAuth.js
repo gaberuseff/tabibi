@@ -1,8 +1,6 @@
 import supabase from "./supabase"
 
 export async function signup({ email, password, userData }) {
-    console.log("Signup called with userData:", userData)
-
     const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -16,9 +14,6 @@ export async function signup({ email, password, userData }) {
     })
 
     if (error) throw error
-
-    console.log("User created with ID:", data.user.id)
-    console.log("Inserting user with clinic_id:", userData.clinicId)
 
     // Insert user data into users table
     const { error: insertError } = await supabase.from("users").insert([
@@ -39,12 +34,8 @@ export async function signup({ email, password, userData }) {
         throw insertError
     }
 
-    console.log("User inserted successfully")
-
     // If user is a doctor, create clinic record
     if (userData.role === "doctor") {
-        console.log("Creating clinic with ID:", userData.clinicId)
-
         const { error: clinicError } = await supabase.from("clinics").insert([
             {
                 clinic_id: userData.clinicId,
@@ -57,8 +48,6 @@ export async function signup({ email, password, userData }) {
             console.error("Error creating clinic:", clinicError)
             throw clinicError
         }
-
-        console.log("Clinic created successfully")
     }
 
     return data

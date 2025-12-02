@@ -57,8 +57,6 @@ export async function updateClinic({ name, address, booking_price, available_tim
         .eq("user_id", session.user.id)
         .single()
 
-    console.log(userData);
-
     if (!userData?.clinic_id) throw new Error("User has no clinic assigned")
 
     // Only doctors can update clinic info

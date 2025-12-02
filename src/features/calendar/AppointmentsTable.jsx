@@ -14,6 +14,16 @@ import {
 } from "../../components/ui/dropdown-menu"
 import DataTable from "../../components/ui/table"
 import { updateAppointment } from "../../services/apiAppointments"
+// Added import for usePlan hook and Dialog components
+import usePlan from "../auth/usePlan"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from "../../components/ui/dialog"
+import { useState } from "react"
 
 const statusMap = {
   pending: { label: "قيد الانتظار", variant: "secondary" },
@@ -69,6 +79,10 @@ const formatPhoneNumberForWhatsApp = (phone) => {
 
 export default function AppointmentsTable({ appointments, total, page, pageSize, onPageChange }) {
   const queryClient = useQueryClient()
+  // Added plan data hook
+  const { data: planData } = usePlan()
+  // State for WhatsApp feature modal
+  const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false)
   
   const { mutate: updateStatus } = useMutation({
     mutationFn: ({ id, status }) => updateAppointment(id, { status }),
@@ -88,7 +102,16 @@ export default function AppointmentsTable({ appointments, total, page, pageSize,
     updateStatus({ id: appointmentId, status: newStatus })
   }
   
+  // Check if WhatsApp feature is enabled in the plan
+  const isWhatsAppEnabled = planData?.plans?.limits?.features?.whatsapp === true;
+  
   const handleSendReminder = (patientPhone, patientName, appointmentDate) => {
+    // If WhatsApp is not enabled in the plan, show a modal and return
+    if (!isWhatsAppEnabled) {
+      setIsWhatsAppModalOpen(true);
+      return;
+    }
+    
     // Format the phone number for WhatsApp
     const formattedPhone = formatPhoneNumberForWhatsApp(patientPhone);
     
@@ -167,7 +190,7 @@ export default function AppointmentsTable({ appointments, total, page, pageSize,
                 appointment.patient?.name, 
                 appointment.date
               )}
-              title="إرسال تذكير عبر الواتساب"
+              title={!isWhatsAppEnabled ? "خطتك الحالية لا تدعم إرسال رسائل WhatsApp" : "إرسال تذكير عبر الواتساب"}
             >
               <Bell className="h-4 w-4" />
             </Button>
@@ -204,18 +227,42 @@ export default function AppointmentsTable({ appointments, total, page, pageSize,
   ]
 
   return (
-    <Card>
-      <CardContent className="p-0">
-        <DataTable 
-          columns={columns} 
-          data={appointments ?? []} 
-          total={total} 
-          page={page} 
-          pageSize={pageSize} 
-          onPageChange={onPageChange} 
-          emptyLabel="لا توجد مواعيد"
-        />
-      </CardContent>
-    </Card>
+    <>
+      <Card>
+        <CardContent className="p-0">
+          <DataTable 
+            columns={columns} 
+            data={appointments ?? []} 
+            total={total} 
+            page={page} 
+            pageSize={pageSize} 
+            onPageChange={onPageChange} 
+            emptyLabel="لا توجد مواعيد"
+          />
+        </CardContent>
+      </Card>
+      
+      {/* WhatsApp Feature Not Available Modal */}
+      <Dialog open={isWhatsAppModalOpen} onOpenChange={setIsWhatsAppModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>ميزة غير متوفرة</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-muted-foreground">
+              خطتك الحالية لا تدعم إرسال رسائل WhatsApp للمرضى
+            </p>
+            <p className="text-muted-foreground mt-2">
+              يرجى ترقية خطتك لتفعيل ميزة إرسال رسائل WhatsApp تلقائياً للمرضى.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setIsWhatsAppModalOpen(false)}>
+              إغلاق
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

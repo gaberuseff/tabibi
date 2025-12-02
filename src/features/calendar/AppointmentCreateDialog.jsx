@@ -82,7 +82,7 @@ export default function AppointmentCreateDialog({ open, onClose }) {
           onClose()
         }
       }}>
-        <DialogContent className="sm:max-w-[500px]" dir="rtl">
+        <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto" dir="rtl">
           <DialogHeader>
             <DialogTitle>موعد جديد</DialogTitle>
           </DialogHeader>
@@ -111,25 +111,25 @@ export default function AppointmentCreateDialog({ open, onClose }) {
                   className="gap-2"
                 >
                   <UserPlus className="size-4" />
-                  مريض جديد
+                  جديد
                 </Button>
               </div>
-              
-              {/* Search Results */}
+
+              {/* Patient Search Results */}
               {patientSearch.length >= 2 && !selectedPatient && (
                 <div className="relative">
-                  <div className="absolute z-10 mt-1 w-full rounded-lg bg-background border shadow-md max-h-48 overflow-y-auto">
+                  <div className="absolute z-10 w-full mt-1 bg-background border rounded-md shadow-lg max-h-60 overflow-y-auto">
                     {isSearching ? (
-                      <div className="p-2 text-sm text-muted-foreground text-center">
+                      <div className="p-3 text-sm text-muted-foreground text-center">
                         جاري البحث...
                       </div>
-                    ) : searchResults && searchResults.length > 0 ? (
-                      <div className="py-1">
+                    ) : searchResults?.length > 0 ? (
+                      <div className="divide-y">
                         {searchResults.map((patient) => (
                           <button
                             key={patient.id}
                             type="button"
-                            className="w-full px-3 py-2 text-start hover:bg-muted transition-colors text-sm"
+                            className="w-full p-3 text-start hover:bg-muted transition-colors"
                             onClick={() => handlePatientSelect(patient)}
                           >
                             <div className="font-medium truncate">{patient.name}</div>
@@ -165,22 +165,9 @@ export default function AppointmentCreateDialog({ open, onClose }) {
               <Label htmlFor="date">التاريخ والوقت *</Label>
               <SimpleDatePicker
                 onDateChange={(dateTime) => {
-                  // Update the form value manually
                   setValue("date", dateTime, { shouldValidate: true })
                 }}
                 error={errors.date?.message}
-              />
-              <input
-                type="hidden"
-                {...register("date", { 
-                  required: "التاريخ والوقت مطلوب",
-                  validate: (value) => {
-                    if (!value || isNaN(new Date(value).getTime())) {
-                      return "تاريخ ووقت الموعد غير صحيح"
-                    }
-                    return true
-                  }
-                })}
               />
               {errors.date && (
                 <p className="text-sm text-red-500">{errors.date.message}</p>
@@ -189,12 +176,11 @@ export default function AppointmentCreateDialog({ open, onClose }) {
 
             {/* Price */}
             <div className="space-y-2">
-              <Label htmlFor="price">سعر الحجز (جنيه) *</Label>
+              <Label htmlFor="price">السعر (ريال)</Label>
               <Input
                 id="price"
                 type="number"
                 step="0.01"
-                min="0"
                 placeholder="0.00"
                 {...register("price", { 
                   required: "سعر الحجز مطلوب",
