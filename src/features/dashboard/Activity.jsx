@@ -1,13 +1,13 @@
-import { useState } from "react";
 import { CalendarDays } from "lucide-react";
+import { useState } from "react";
 import { Badge } from "../../components/ui/badge";
 import { Card, CardContent, CardHeader } from "../../components/ui/card";
-import { SkeletonLine } from "../../components/ui/skeleton";
 import Pagination from "../../components/ui/pagination";
-import useRecentActivity from "./useRecentActivity";
+import { SkeletonLine } from "../../components/ui/skeleton";
 import { ACTIVITY_PAGE_SIZE } from "../../constants/pagination";
+import useRecentActivity from "./useRecentActivity";
 
-function Item({ icon: Icon, title, time, tag, isLoading }) {
+function Item({icon: Icon, title, time, tag, isLoading}) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-between gap-3 py-2">
@@ -41,10 +41,16 @@ function Item({ icon: Icon, title, time, tag, isLoading }) {
 
 export default function Activity() {
   const [page, setPage] = useState(1);
-  const { data: activities, isLoading } = useRecentActivity(page, ACTIVITY_PAGE_SIZE);
+  const {data: activities, isLoading} = useRecentActivity(
+    page,
+    ACTIVITY_PAGE_SIZE
+  );
 
   // Calculate total pages
-  const totalPages = activities && activities.count ? Math.ceil(activities.count / ACTIVITY_PAGE_SIZE) : 1;
+  const totalPages =
+    activities && activities.count
+      ? Math.ceil(activities.count / ACTIVITY_PAGE_SIZE)
+      : 1;
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
@@ -60,7 +66,7 @@ export default function Activity() {
       <CardContent>
         <div className="divide-y divide-border">
           {isLoading
-            ? Array.from({ length: 3 }).map((_, i) => (
+            ? Array.from({length: 3}).map((_, i) => (
                 <Item key={i} isLoading={true} />
               ))
             : activities && activities.data && activities.data.length > 0
@@ -73,7 +79,7 @@ export default function Activity() {
                   tag={activity.tag}
                 />
               ))
-            : Array.from({ length: 3 }).map((_, i) => (
+            : Array.from({length: 3}).map((_, i) => (
                 <Item
                   key={i}
                   icon={CalendarDays}
@@ -82,13 +88,13 @@ export default function Activity() {
                 />
               ))}
         </div>
-        
+
         {/* Pagination */}
         <div className="mt-6">
-          <Pagination 
-            currentPage={page} 
-            totalPages={totalPages} 
-            onPageChange={handlePageChange} 
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
           />
         </div>
       </CardContent>

@@ -1,14 +1,13 @@
+import { useForm } from "react-hook-form";
+import { Button } from "../../components/ui/button";
 import {
   Dialog,
-  DialogHeader,
   DialogContent,
   DialogFooter,
+  DialogHeader,
 } from "../../components/ui/dialog";
-import { Button } from "../../components/ui/button";
-import { useForm } from "react-hook-form";
-import useCreateTreatmentTemplate from "./useCreateTreatmentTemplate";
 import TreatmentTemplateForm from "./TreatmentTemplateForm";
-import toast from "react-hot-toast";
+import useCreateTreatmentTemplate from "./useCreateTreatmentTemplate";
 
 export default function TreatmentTemplateCreateDialog({ open, onClose, onTemplateCreated }) {
   const {
@@ -33,7 +32,6 @@ export default function TreatmentTemplateCreateDialog({ open, onClose, onTemplat
       };
       
       const newTemplate = await mutateAsync(payload);
-      toast.success("تم إضافة خطة العلاج بنجاح");
       reset();
       if (onTemplateCreated) {
         onTemplateCreated(newTemplate);

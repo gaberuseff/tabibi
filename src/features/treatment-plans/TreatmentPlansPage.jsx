@@ -3,11 +3,9 @@ import { useState } from "react";
 import { Button } from "../../components/ui/button";
 import TreatmentTemplateCreateDialog from "./TreatmentTemplateCreateDialog";
 import TreatmentTemplatesList from "./TreatmentTemplatesList";
-import useTreatmentTemplates from "./useTreatmentTemplates";
 
 export default function TreatmentPlansPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { data: templates } = useTreatmentTemplates();
   
   return (
     <div className="space-y-8" dir="rtl">

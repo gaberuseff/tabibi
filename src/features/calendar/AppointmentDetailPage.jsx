@@ -3,7 +3,6 @@ import {ar} from "date-fns/locale";
 import {ArrowLeft, Calendar, Edit, FileText, Wallet} from "lucide-react";
 import {useState} from "react";
 import {useNavigate, useParams} from "react-router-dom";
-import toast from "react-hot-toast";
 import {Button} from "../../components/ui/button";
 import {Card, CardContent, CardHeader} from "../../components/ui/card";
 import {
@@ -18,14 +17,14 @@ import {Label} from "../../components/ui/label";
 import {SkeletonLine} from "../../components/ui/skeleton";
 import {Textarea} from "../../components/ui/textarea";
 import useAppointment from "./useAppointment";
-import useUpdateAppointment from "./useUpdateAppointment";
+import useUpdateAppointmentHandler from "./useUpdateAppointmentHandler";
 
 export default function AppointmentDetailPage() {
   const {appointmentId} = useParams();
   const {data: appointment, isLoading, error} = useAppointment(appointmentId);
   const navigate = useNavigate();
-  const {mutate: updateAppointment, isPending: isUpdating} =
-    useUpdateAppointment();
+  const {handleAppointmentUpdate, isPending: isUpdating} =
+    useUpdateAppointmentHandler();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editData, setEditData] = useState({
     date: "",
@@ -74,25 +73,11 @@ export default function AppointmentDetailPage() {
   };
 
   const handleSaveEdit = () => {
-    // Convert price to number if it's a string
-    const payload = {
-      ...editData,
-      price:
-        typeof editData.price === "string"
-          ? parseFloat(editData.price)
-          : editData.price,
-    };
-
-    updateAppointment(
-      {id: appointmentId, ...payload},
-      {
-        onSuccess: () => {
-          setIsEditModalOpen(false);
-          // Refresh the appointment data
-          window.location.reload();
-        },
-      }
-    );
+    handleAppointmentUpdate(appointmentId, editData, () => {
+      setIsEditModalOpen(false);
+      // Refresh the appointment data
+      window.location.reload();
+    });
   };
 
   if (isLoading) {

@@ -1,26 +1,26 @@
-import {memo} from "react";
-import {Toaster} from "react-hot-toast";
-import {BrowserRouter, Route, Routes} from "react-router-dom";
+import { memo } from "react";
+import { Toaster } from "react-hot-toast";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import DoctorLayout from "./components/layout/DoctorLayout";
-import {AuthProvider} from "./features/auth/AuthContext";
+import { AuthProvider } from "./features/auth/AuthContext";
 import PermissionGuard from "./features/auth/PermissionGuard";
 import ProtectedRoute from "./features/auth/ProtectedRoute";
 import PublicRoute from "./features/auth/PublicRoute";
+import AppointmentDetailPage from "./features/calendar/AppointmentDetailPage";
 import PatientDetailPage from "./features/patients/PatientDetailPage";
 import PatientPlanDetailPage from "./features/patients/PatientPlanDetailPage";
 import VisitDetailPage from "./features/patients/VisitDetailPage";
-import AppointmentDetailPage from "./features/calendar/AppointmentDetailPage";
 import Booking from "./pages/Booking";
+import Calendar from "./pages/Calendar";
+import Clinic from "./pages/Clinic";
+import Dashboard from "./pages/Dashboard";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
+import Patients from "./pages/Patients";
 import PlanConfirmation from "./pages/PlanConfirmation";
+import Settings from "./pages/Settings";
 import Signup from "./pages/Signup";
-import Calendar from "./pages/doctor/Calendar";
-import Clinic from "./pages/doctor/Clinic";
-import Dashboard from "./pages/doctor/Dashboard";
-import Patients from "./pages/doctor/Patients";
-import Settings from "./pages/doctor/Settings";
-import TreatmentPlans from "./pages/doctor/TreatmentPlans";
+import TreatmentPlans from "./pages/TreatmentPlans";
 
 // Memoize route components to prevent unnecessary re-renders
 const MemoizedLanding = memo(Landing);

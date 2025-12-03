@@ -1,24 +1,20 @@
-import {Button} from "../components/ui/button";
-import {Card, CardContent, CardFooter, CardHeader} from "../components/ui/card";
 import {
-  CheckCircle2,
   ArrowLeft,
-  Calendar,
-  Users,
-  FileText,
-  Receipt,
-  ShieldCheck,
-  Smartphone,
+  CheckCircle2
 } from "lucide-react";
-import {formatCurrency} from "../lib/utils";
-import usePricingPlan from "../features/settings/usePricingPlan";
-import {useAuth} from "../features/auth/AuthContext";
-import {useNavigate, useParams} from "react-router-dom";
-import {
-  useCreateSubscription,
-  useCancelActiveSubscription,
-} from "../features/auth/useSubscription";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useNavigate, useParams } from "react-router-dom";
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader } from "../components/ui/card";
+import { useAuth } from "../features/auth/AuthContext";
+import {
+  useCancelActiveSubscription,
+  useCreateSubscription,
+} from "../features/auth/useSubscription";
+import { DiscountCodeInput, useDiscountCode } from "../features/discount-code";
+import usePricingPlan from "../features/settings/usePricingPlan";
+import { formatCurrency } from "../lib/utils";
 
 export default function PlanConfirmation() {
   const {planId} = useParams();
@@ -29,6 +25,14 @@ export default function PlanConfirmation() {
   const {mutate: cancelActiveSubscription} = useCancelActiveSubscription();
 
   const isLoading = isAuthLoading || isPlanLoading;
+
+  const discount = useDiscountCode(plan?.price || 0);
+  const [finalPrice, setFinalPrice] = useState(plan?.price || 0);
+
+  // Update final price when discount changes
+  useEffect(() => {
+    setFinalPrice(discount.finalAmount);
+  }, [discount.finalAmount]);
 
   const getButtonText = (planName) => {
     if (!planName) return "تأكيد الاشتراك";
@@ -57,7 +61,6 @@ export default function PlanConfirmation() {
           {
             onSuccess: () => {
               // Redirect to dashboard or show success message
-              toast.success("تم تفعيل الاشتراك بنجاح!");
               navigate("/dashboard");
             },
             onError: (error) => {
@@ -204,6 +207,24 @@ export default function PlanConfirmation() {
                   </div>
                 </div>
 
+                {/* Discount Code Input */}
+                <DiscountCodeInput
+                  onApply={discount.applyDiscount}
+                  isPending={discount.isPending}
+                  error={discount.error}
+                  isApplied={!!discount.appliedDiscount}
+                  onClear={discount.clearDiscount}
+                  discountAmount={discount.discountAmount}
+                  discountValue={
+                    discount.appliedDiscount?.is_percentage
+                      ? discount.appliedDiscount?.value
+                      : discount.discountAmount
+                  }
+                  isPercentage={
+                    discount.appliedDiscount?.is_percentage || false
+                  }
+                />
+
                 {/* Payment Details */}
                 <div className="rounded-lg border border-border p-6">
                   <h3 className="text-lg font-semibold mb-4">تفاصيل الدفع</h3>
@@ -212,6 +233,12 @@ export default function PlanConfirmation() {
                       <span>سعر الخطة الشهرية</span>
                       <span>{formatCurrency(plan.price)}</span>
                     </div>
+                    {discount.discountAmount > 0 && (
+                      <div className="flex justify-between text-green-600 dark:text-green-400">
+                        <span>الخصم</span>
+                        <span>-{formatCurrency(discount.discountAmount)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <span>الضرائب</span>
                       <span>0.00 جنيه</span>
@@ -219,7 +246,7 @@ export default function PlanConfirmation() {
                     <div className="border-t border-border pt-3 flex justify-between font-semibold text-lg">
                       <span>المجموع</span>
                       <span className="text-primary">
-                        {formatCurrency(plan.price)}
+                        {formatCurrency(finalPrice)}
                       </span>
                     </div>
                   </div>

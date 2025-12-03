@@ -1,12 +1,13 @@
-import { lazy, Suspense, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-import Header from "../components/layout/Header"
-import Footer from "../components/layout/Footer"
-import Hero from "../components/sections/Hero"
+import {lazy, Suspense, useEffect} from "react";
+import {useLocation} from "react-router-dom";
+import Footer from "../components/layout/Footer";
+import Header from "../components/layout/Header";
+import Hero from "../components/sections/Hero";
+import usePageMeta from "../hooks/usePageMeta";
 // Lazy load non-critical sections
-const Features = lazy(() => import("../components/sections/Features"))
-const Workflow = lazy(() => import("../components/sections/Workflow"))
-const Pricing = lazy(() => import("../components/sections/Pricing"))
+const Features = lazy(() => import("../components/sections/Features"));
+const Workflow = lazy(() => import("../components/sections/Workflow"));
+const Pricing = lazy(() => import("../components/sections/Pricing"));
 
 // Loading skeletons for lazy components
 function SectionSkeleton() {
@@ -22,10 +23,43 @@ function SectionSkeleton() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 export default function Landing() {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!location.hash) return;
+
+    const id = location.hash.replace("#", "");
+    let attempts = 0;
+
+    const tryScroll = () => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({behavior: "smooth", block: "start"});
+      } else if (attempts < 6) {
+        attempts += 1;
+        setTimeout(tryScroll, 200);
+      }
+    };
+
+    // small timeout to allow layout/lazy sections to mount
+    setTimeout(tryScroll, 50);
+  }, [location]);
+
+  // Set SEO meta for the landing page
+  usePageMeta({
+    title: "تابيبي — نظام إدارة العيادات والمواعيد",
+    description:
+      "تابيبي نظام عربي لإدارة العيادات: حجز مواعيد، ملف طبي، فواتير، وتقارير.",
+    url: typeof window !== "undefined" ? window.location.href : "/",
+    canonical:
+      typeof window !== "undefined" ? window.location.href.split("#")[0] : "/",
+    image: "/hero-optimized.webp",
+  });
+
   return (
     <div dir="rtl" className="min-h-svh bg-background">
       <div className="pointer-events-none fixed inset-0 -z-10 opacity-70">

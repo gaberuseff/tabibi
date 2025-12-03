@@ -1,17 +1,14 @@
-import {useEffect, useState} from "react";
-import {CheckCircle2} from "lucide-react";
-import {formatCurrency} from "../../lib/utils";
-import {Badge} from "../ui/badge";
-import {Button} from "../ui/button";
-import {Card, CardContent, CardFooter, CardHeader} from "../ui/card";
-import {useNavigate} from "react-router-dom";
+import { CheckCircle2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import usePricingPlans from "../../features/settings/usePricingPlans";
+import { formatCurrency } from "../../lib/utils";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
+import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
 
 export default function Pricing() {
   const navigate = useNavigate();
   const {data: plans = [], isLoading, error} = usePricingPlans();
-
-  console.log(plans);
 
   if (isLoading) {
     return (

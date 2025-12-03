@@ -1,9 +1,8 @@
+import { Key, User } from "lucide-react";
 import { useState } from "react";
 import { Card, CardContent, CardHeader } from "../../components/ui/card";
-import { Settings, User, Key } from "lucide-react";
-import PersonalInfoTab from "./PersonalInfoTab";
 import ChangePasswordTab from "./ChangePasswordTab";
-import { useAuth } from "../auth/AuthContext";
+import PersonalInfoTab from "./PersonalInfoTab";
 
 const tabs = [
   { id: "personal", label: "البيانات الشخصية", icon: User },
@@ -11,11 +10,7 @@ const tabs = [
 ];
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState("personal");
-  const { user } = useAuth();
-  
-  const isDoctor = user?.role === "doctor";
-
+  const [activeTab, setActiveTab] = useState("personal");  
   return (
     <div className="space-y-6">
       <div className="space-y-3">

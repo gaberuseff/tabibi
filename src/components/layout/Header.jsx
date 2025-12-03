@@ -1,10 +1,24 @@
-import { Stethoscope } from "lucide-react"
-import { Button } from "../ui/button"
-import { Link } from "react-router-dom"
-import { useAuth } from "../../features/auth/AuthContext"
+import {Stethoscope} from "lucide-react";
+import {Button} from "../ui/button";
+import {Link, useNavigate, useLocation} from "react-router-dom";
+import {useAuth} from "../../features/auth/AuthContext";
 
 export default function Header() {
-  const { user, isLoading } = useAuth()
+  const {user, isLoading} = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleSectionClick = (id) => {
+    if (location.pathname === "/") {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({behavior: "smooth", block: "start"});
+        return;
+      }
+    }
+    // Navigate to landing with hash; Landing will handle scrolling after mount
+    navigate(`/#${id}`);
+  };
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/70 backdrop-blur">
@@ -14,9 +28,24 @@ export default function Header() {
           <span className="text-xl font-bold">Tabibi</span>
         </div>
         <nav className="hidden md:flex items-center gap-1 text-sm">
-          <Button variant="ghost" className="text-muted-foreground hover:text-foreground">المميزات</Button>
-          <Button variant="ghost" className="text-muted-foreground hover:text-foreground">سير العمل</Button>
-          <Button variant="ghost" className="text-muted-foreground hover:text-foreground">الأسعار</Button>
+          <Button
+            variant="ghost"
+            className="text-muted-foreground hover:text-foreground"
+            onClick={() => handleSectionClick("features")}>
+            المميزات
+          </Button>
+          <Button
+            variant="ghost"
+            className="text-muted-foreground hover:text-foreground"
+            onClick={() => handleSectionClick("workflow")}>
+            سير العمل
+          </Button>
+          <Button
+            variant="ghost"
+            className="text-muted-foreground hover:text-foreground"
+            onClick={() => handleSectionClick("pricing")}>
+            الأسعار
+          </Button>
         </nav>
         <div className="flex items-center gap-3">
           {isLoading ? (
@@ -44,5 +73,5 @@ export default function Header() {
         </div>
       </div>
     </header>
-  )
+  );
 }
