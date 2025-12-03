@@ -59,7 +59,7 @@ export default function TreatmentTemplateEditDialog({ open, onClose, template })
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <h3 className="text-lg font-semibold">تعديل خطة علاج</h3>
         </DialogHeader>

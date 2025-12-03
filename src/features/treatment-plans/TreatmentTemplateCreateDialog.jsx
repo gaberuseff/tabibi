@@ -44,7 +44,7 @@ export default function TreatmentTemplateCreateDialog({ open, onClose, onTemplat
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <h3 className="text-lg font-semibold">إضافة خطة علاج جديدة</h3>
         </DialogHeader>
