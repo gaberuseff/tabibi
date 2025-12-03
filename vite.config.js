@@ -31,5 +31,6 @@ export default defineConfig({
   // Optimize dependencies pre-bundling
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query']
-  }
+  },
+  publicDir: 'public'
 })
